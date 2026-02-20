@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+
+<style>
+
+/* ==============================
+   GLOBAL STYLE SYSTEM
+============================== */
+
+:root {
+    --color-1: {{ colors.COLOR_1 }};
+    --color-2: {{ colors.COLOR_2 }};
+    --color-3: {{ colors.COLOR_3 }};
+    --color-4: {{ colors.COLOR_4 }};
+    --color-5: {{ colors.COLOR_5 }};
+    --color-6: {{ colors.COLOR_6 }};
+}
+
+@page {
+    size: A4 portrait;
+    margin: 25mm 20mm 25mm 20mm;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+    color: var(--color-6);
+    margin: 0;
+}
+
+.page {
+  position: relative;
+  page-break-after: always;
+}
+
+.kpi-page {
+  padding-left: 0;
+  box-sizing: border-box;
+}
+
+.page:last-of-type {
+  page-break-after: auto;
+}
+
+/* ==============================
+   HEADER / FOOTER
+============================== */
+
+.footer {
+    position: fixed;
+    bottom: 5mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    color: #888;
+}
+
+.footer-right-logo {
+    position: fixed;
+    right: 20mm;
+    bottom: 3mm;
+    width: 40px;
+    height: auto;
+}
+
+/* ==============================
+   TYPOGRAPHY
+============================== */
+
+h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+h2 {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    border-bottom: 2px solid var(--color-1);
+    padding-bottom: 6px;
+}
+
+.subtitle {
+    color: var(--color-2);
+    font-weight: 500;
+    margin-bottom: 40px;
+}
+
+.kpi-comment {
+    margin-top: 14px;
+    font-size: 16px;
+    line-height: 1.65;
+}
+
+/* ==============================
+   KPI BLOCK
+============================== */
+
+.kpi-block {
+    margin-top: 20px;
+}
+
+.chart-container {
+    margin-top: 14px !important;
+    margin-bottom: 14px !important;
+}
+
+/* PDF-Fließtext global um +2px (typisch von 14px auf 16px) */
+.kpi-page [style*="font-size:14px"] {
+    font-size: 16px !important;
+}
+
+/* Plotly pies in PDF/HTML: block-spezifisch leicht nach links schieben */
+.block-top_urls .chart-container .js-plotly-plot {
+    transform: translateX(-28px);
+}
+
+.toc-item {
+    margin-bottom: 10px;
+    font-size: 20px;
+    line-height: 1.8;
+}
+
+.cover-page {
+    min-height: 247mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.cover-header {
+    position: absolute;
+    top: 8mm;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.cover-title {
+    font-size: 58px;
+    line-height: 1.05;
+    margin: 0;
+    color: var(--color-6);
+}
+
+.cover-domain {
+    margin-top: 26px;
+    font-size: 36px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--color-2);
+}
+
+.cover-logo {
+    margin-top: 42px;
+}
+
+.toc-title {
+    font-size: 34px;
+    margin-bottom: 30px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ==============================
+     PAGE 1 – COVER
+================================= -->
+
+<div class="page cover-page">
+    {% if logo_data_uri %}
+    <div class="cover-header">
+        <img src="{{ logo_data_uri }}" width="750" alt="EDELWEISS Digital Logo"/>
+    </div>
+    {% endif %}
+    <h1 class="cover-title">{{ title }}</h1>
+    <div class="cover-domain">{{ domain }}</div>
+</div>
+
+
+<!-- ==============================
+     PAGE 2 – TABLE OF CONTENTS
+================================= -->
+
+<div class="page">
+
+    <h2 class="toc-title">Inhaltsverzeichnis</h2>
+
+    <div class="toc-item">Sichtbarkeitsindex – Entwicklung der organischen Sichtbarkeit.</div>
+    <div class="toc-item">Top URLs – Stärkste Seiten nach Sichtbarkeitsbeitrag.</div>
+    <div class="toc-item">Keyword-Verlauf – Entwicklung der rankenden Keywords.</div>
+    <div class="toc-item">Aktuelle Rankings – Wichtigste Positionen.</div>
+    <div class="toc-item">Gewinner-Keywords – Positive Ranking-Entwicklung.</div>
+    <div class="toc-item">Neueinsteiger – Neue Rankings im Zeitraum.</div>
+    <div class="toc-item">Verlierer – Rückläufige Positionen.</div>
+    <div class="toc-item">Local SEO – Firmendaten Manager Auswertung.</div>
+    <div class="toc-item">Mobile Darstellung – Smartphone-Check und Nutzerfreundlichkeit.</div>
+    <div class="toc-item">Technischer Quick-Check – Broken Links, SSL, Sitemap und robots.txt.</div>
+    <div class="toc-item">KI-Overview – Sichtbarkeit der Marke aus KI-Perspektive.</div>
+    <div class="toc-item">Backlinks – Entwicklung des Linkprofils.</div>
+
+</div>
+
+
+<!-- ==============================
+     KPI PAGES
+================================= -->
+
+{% for block in blocks %}
+<div class="page kpi-page block-{{ block.id }}" style="--accent: {{ block.accent_color }}; {% if loop.last %}page-break-after:auto;{% endif %}">
+    <h2>{{ block.title }}</h2>
+
+{% if block.pre_html %}
+  {{ block.pre_html | safe }}
+{% endif %}
+
+{% if block.chart_html %}
+<div class="chart-container">
+  {{ block.chart_html | safe }}
+</div>
+{% endif %}
+{% if block.mid_html %}
+<div class="chart-container" style="margin-top: 12px;">
+  {{ block.mid_html | safe }}
+</div>
+{% endif %}
+{% if block.post_chart_html %}
+<div class="chart-container" style="margin-top: 16px;">
+  {{ block.post_chart_html | safe }}
+</div>
+{% endif %}
+{% if block.post_html %}
+<div class="chart-container" style="margin-top: 16px;">
+  {{ block.post_html | safe }}
+</div>
+{% endif %}
+{% if block.comment %}
+    <div class="kpi-comment">
+        {{ block.comment }}
+    </div>
+{% endif %}
+
+</div>
+{% endfor %}
+
+
+<!-- ==============================
+     FOOTER (all pages)
+================================= -->
+
+<div class="footer">
+    EDELWEISS Digital SEO-Report - {{ domain }}
+</div>
+{% if flower_logo_data_uri %}
+<img class="footer-right-logo" src="{{ flower_logo_data_uri }}" alt="Blume Logo"/>
+{% endif %}
+
+</body>
+</html>
