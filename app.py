@@ -432,12 +432,12 @@ if blocks:
             st.markdown(b["pre_html"], unsafe_allow_html=True)
 
         if b.get("fig") is not None:
-            st.plotly_chart(b["fig"], use_container_width=True)
+            st.plotly_chart(b["fig"], width="stretch")
         if b.get("mid_html"):
             st.markdown(b["mid_html"], unsafe_allow_html=True)
 
         if b.get("post_fig") is not None:
-            st.plotly_chart(b["post_fig"], use_container_width=True)
+            st.plotly_chart(b["post_fig"], width="stretch")
         if b.get("post_html"):
             st.markdown(b["post_html"], unsafe_allow_html=True)
 
