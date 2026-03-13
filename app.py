@@ -284,6 +284,50 @@ def toc_description(block_id: str, title: str) -> str:
 
 
 def normalize_blocks(blocks: list[dict] | None) -> list[dict]:
+    def split_at_heading(html: str, heading: str) -> tuple[str, str]:
+        if not html or heading not in html:
+            return html or "", ""
+        idx = html.find(heading)
+        start = html.rfind("<div", 0, idx)
+        if start == -1:
+            start = idx
+        return html[:start], html[start:]
+
+    def split_reviews_parts(html: str) -> tuple[str, str, str]:
+        raw = (html or "").replace("<div class='pdf-page-break'></div>", "")
+        if not raw:
+            return "", "", ""
+
+        review_part = raw
+        technical_part = ""
+        mobile_part = ""
+
+        tech_marker = "Technischer Quick-Check"
+        mobile_marker = "Mobile Darstellung"
+
+        tech_idx = raw.find(tech_marker)
+        if tech_idx != -1:
+            tech_start = raw.rfind("<div", 0, tech_idx)
+            if tech_start == -1:
+                tech_start = tech_idx
+            review_part = raw[:tech_start]
+            rest = raw[tech_start:]
+        else:
+            rest = ""
+
+        if rest:
+            mobile_idx = rest.find(mobile_marker)
+            if mobile_idx != -1:
+                mobile_start = rest.rfind("<div", 0, mobile_idx)
+                if mobile_start == -1:
+                    mobile_start = mobile_idx
+                technical_part = rest[:mobile_start]
+                mobile_part = rest[mobile_start:]
+            else:
+                technical_part = rest
+
+        return review_part, technical_part, mobile_part
+
     normalized: list[dict] = []
     for b in blocks or []:
         if not isinstance(b, dict):
@@ -292,19 +336,31 @@ def normalize_blocks(blocks: list[dict] | None) -> list[dict]:
             normalized.append(b)
             continue
 
+        summary_html = (b.get("pdf_intro_html") or "") + (b.get("pdf_summary_html") or "")
+        google_presence_html = b.get("pdf_google_presence_html") or ""
+        reviews_html = b.get("pdf_reviews_html") or ""
+        technical_html = b.get("pdf_technical_html") or ""
+        mobile_html = b.get("pdf_mobile_html") or ""
+
+        if not any([summary_html, google_presence_html, reviews_html, technical_html, mobile_html]):
+            pre_html = b.get("pre_html") or ""
+            post_html = b.get("post_html") or ""
+            summary_html, google_presence_html = split_at_heading(pre_html, "Google Präsenz")
+            reviews_html, technical_html, mobile_html = split_reviews_parts(post_html)
+
         normalized.extend(
             [
                 {
                     "id": "local_seo_summary",
                     "title": "Local SEO – Auswertung Ihres Unternehmensprofils",
                     "accent_token": b.get("accent_token", "COLOR_2"),
-                    "pre_html": (b.get("pdf_intro_html") or "") + (b.get("pdf_summary_html") or ""),
+                    "pre_html": summary_html,
                 },
                 {
                     "id": "google_presence",
                     "title": "Google Präsenz",
                     "accent_token": b.get("accent_token", "COLOR_2"),
-                    "pre_html": b.get("pdf_google_presence_html")
+                    "pre_html": google_presence_html
                     or "<div style='font-size:14px; line-height:1.6; color:#666;'>Diese Auswertung setzt ein passendes Firmendaten-Manager-Unternehmensprofil voraus.</div>",
                     "fig": b.get("fig"),
                     "post_fig": b.get("post_fig"),
@@ -313,20 +369,20 @@ def normalize_blocks(blocks: list[dict] | None) -> list[dict]:
                     "id": "google_reviews",
                     "title": "Google Bewertungen",
                     "accent_token": b.get("accent_token", "COLOR_2"),
-                    "pre_html": b.get("pdf_reviews_html") or "",
+                    "pre_html": reviews_html,
                 },
                 {
                     "id": "technical_quick_check",
                     "title": "Technischer Quick-Check",
                     "accent_token": b.get("accent_token", "COLOR_2"),
-                    "pre_html": b.get("pdf_technical_html")
+                    "pre_html": technical_html
                     or "<div style='font-size:14px; line-height:1.6; color:#666;'>Für diesen Abschnitt liegen aktuell keine Daten vor.</div>",
                 },
                 {
                     "id": "mobile_display",
                     "title": "Mobile Darstellung",
                     "accent_token": b.get("accent_token", "COLOR_2"),
-                    "pre_html": b.get("pdf_mobile_html")
+                    "pre_html": mobile_html
                     or "<div style='font-size:14px; line-height:1.6; color:#666;'>Für diesen Abschnitt liegen aktuell keine Daten vor.</div>",
                 },
             ]
@@ -420,7 +476,7 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("Report generieren", type="primary")
-    st.caption("Version 1.0.18")
+    st.caption("Version 1.0.19")
 
 
 domain = safe_domain(domain_raw)
@@ -540,6 +596,14 @@ if blocks:
 }
 input[type="checkbox"] {
   accent-color: #2DBE8D !important;
+}
+.stToggle [role="switch"][aria-checked="true"] {
+  background-color: #2DBE8D !important;
+  border-color: #2DBE8D !important;
+}
+.stToggle [role="switch"][aria-checked="false"] {
+  background-color: #C9CED6 !important;
+  border-color: #C9CED6 !important;
 }
 .stToggle div[data-baseweb="checkbox"]:has(input:checked) > label > div:first-child,
 .stToggle label[data-baseweb="checkbox"]:has(input:checked) > div:first-child,
