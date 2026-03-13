@@ -224,10 +224,16 @@ def _fetch_customer_feedback(ctx: ReportContext, loc_id: str, uberall_api_key: s
 
     # 1) Primär: customer-feedback (enthält repliedCount/ratingCount für Antwortrate)
     feedback = {}
+    # Wichtige Erkenntnis aus dem Live-Abgleich:
+    # customer-feedback mit type=GOOGLE liefert für einzelne Locations
+    # teils nur einen Teilbestand der Reviews. Die Uberall-Dashboard-Werte
+    # für Rating, Anzahl Reviews und Antwortrate entsprechen hier der
+    # Aggregation OHNE type-Filter, aber mit locationIds.
     feedback_variants = [
+        {**base_params, "locationIds": str(loc_id)},
+        {**base_params, "locationIds": [int(loc_id)]},
         {**base_params, "locationIds": str(loc_id), "type": "GOOGLE"},
         {**base_params, "locationIds": [int(loc_id)], "type": "GOOGLE"},
-        {**base_params, "locationId": str(loc_id), "type": "GOOGLE"},
     ]
     for p in feedback_variants:
         try:
