@@ -8,7 +8,7 @@ from metrics.ranking_changes import build_newcomers_block, build_winners_block, 
 
 from metrics.backlinks import build_backlinks_block
 from metrics.ai_overview import build_ai_overview_block
-from metrics.local_seo_fdm import build_local_seo_fdm_block
+from metrics.local_seo_fdm import build_local_seo_fdm_blocks
 
 
 def build_report(
@@ -32,8 +32,8 @@ def build_report(
     blocks.append(build_losers_block(ctx, sistrix_api_key, openai_api_key))
 
     # Local SEO (Firmendaten Manager + Google)
-    blocks.append(
-        build_local_seo_fdm_block(
+    blocks.extend(
+        build_local_seo_fdm_blocks(
             ctx,
             uberall_input or {},
             uberall_api_key=uberall_api_key,

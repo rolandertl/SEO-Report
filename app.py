@@ -264,7 +264,9 @@ def toc_description(block_id: str, title: str) -> str:
         "ranking-veränderungen_mit_rückgang": "Verlierer – Rückläufige Positionen.",
         "ranking-veränderungen-mit-rückgang": "Verlierer – Rückläufige Positionen.",
         "ranking_veränderungen_mit_rückgang": "Verlierer – Rückläufige Positionen.",
-        "local_seo_fdm": "Local SEO – Firmendaten Manager Auswertung.",
+        "local_seo_summary": "Local SEO – Profilvollständigkeit, Verzeichnisse und Bewertungsverteilung.",
+        "google_presence": "Google Präsenz – Impressionen, Klicks und Verlauf.",
+        "google_reviews": "Google Bewertungen – Rating, Anzahl und Antwortrate.",
         "technical_quick_check": "Technischer Quick-Check – Broken Links, SSL, Sitemap und robots.txt.",
         "mobile_display": "Mobile Darstellung – Smartphone-Check und Nutzerfreundlichkeit.",
         "ai_overview": "KI-Overview – Sichtbarkeit der Marke aus KI-Perspektive.",
@@ -281,52 +283,10 @@ def toc_description(block_id: str, title: str) -> str:
 
 
 def build_pdf_blocks(blocks: list[dict]) -> list[dict]:
-    pdf_blocks: list[dict] = []
-    for b in blocks:
-        if not isinstance(b, dict):
-            continue
-        block_id = b.get("id", "")
-        if block_id == "local_seo_fdm":
-            if pdf_section_visible("local_seo_fdm"):
-                main_pre_html = (b.get("pdf_intro_html") or "")
-                if pdf_section_visible("local_seo_summary"):
-                    main_pre_html += (b.get("pdf_summary_html") or "")
-                main_pre_html += (b.get("pdf_google_presence_html") or "")
-                pdf_blocks.append(
-                    {
-                        **b,
-                        "pre_html": main_pre_html,
-                        "post_html": b.get("pdf_reviews_html") or "",
-                        "mid_html": "",
-                        "pdf_mid_html": "",
-                        "pdf_post_html": "",
-                        "pdf_technical_html": None,
-                        "pdf_mobile_html": None,
-                    }
-                )
-            if pdf_section_visible("technical_quick_check") and b.get("pdf_technical_html"):
-                pdf_blocks.append(
-                    {
-                        "id": "technical_quick_check",
-                        "title": "Technischer Quick-Check",
-                        "accent_token": b.get("accent_token", "COLOR_2"),
-                        "pre_html": b.get("pdf_technical_html"),
-                    }
-                )
-            if pdf_section_visible("mobile_display") and b.get("pdf_mobile_html"):
-                pdf_blocks.append(
-                    {
-                        "id": "mobile_display",
-                        "title": "Mobile Darstellung",
-                        "accent_token": b.get("accent_token", "COLOR_2"),
-                        "pre_html": b.get("pdf_mobile_html"),
-                    }
-                )
-            continue
-
-        if pdf_section_visible(block_id):
-            pdf_blocks.append(b)
-    return pdf_blocks
+    return [
+        b for b in blocks
+        if isinstance(b, dict) and pdf_section_visible(b.get("id", ""))
+    ]
 
 
 if not require_secrets():
@@ -408,7 +368,7 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("Report generieren", type="primary")
-    st.caption("Version 1.0.16")
+    st.caption("Version 1.0.17")
 
 
 domain = safe_domain(domain_raw)
@@ -526,8 +486,30 @@ if blocks:
   border-bottom: 2px solid #EE316B;
   line-height: 1.2;
 }
-div[data-baseweb="switch"] input:checked + div {
+input[type="checkbox"] {
+  accent-color: #2DBE8D !important;
+}
+label[data-baseweb="checkbox"] input:checked + div,
+label[data-baseweb="checkbox"] input:checked ~ div,
+div[data-baseweb="checkbox"] input:checked + div,
+div[data-baseweb="checkbox"] input:checked ~ div,
+label[data-baseweb="switch"] input:checked + div,
+label[data-baseweb="switch"] input:checked ~ div,
+div[data-baseweb="switch"] input:checked + div,
+div[data-baseweb="switch"] input:checked ~ div {
   background-color: #2DBE8D !important;
+  border-color: #2DBE8D !important;
+}
+label[data-baseweb="checkbox"] input:not(:checked) + div,
+label[data-baseweb="checkbox"] input:not(:checked) ~ div,
+div[data-baseweb="checkbox"] input:not(:checked) + div,
+div[data-baseweb="checkbox"] input:not(:checked) ~ div,
+label[data-baseweb="switch"] input:not(:checked) + div,
+label[data-baseweb="switch"] input:not(:checked) ~ div,
+div[data-baseweb="switch"] input:not(:checked) + div,
+div[data-baseweb="switch"] input:not(:checked) ~ div {
+  background-color: #C9CED6 !important;
+  border-color: #C9CED6 !important;
 }
 </style>
 """,
@@ -547,64 +529,6 @@ div[data-baseweb="switch"] input:checked + div {
     for b in blocks:
         if not isinstance(b, dict):
             st.error("Ein Report-Block ist leer (None). Bitte Block-Builder prüfen.")
-            continue
-
-        if b.get("id") == "local_seo_fdm":
-            render_section_header(b.get("title", "Block"), "local_seo_fdm")
-
-            has_split_sections = any(
-                key in b
-                for key in (
-                    "pdf_intro_html",
-                    "pdf_summary_html",
-                    "pdf_google_presence_html",
-                    "pdf_reviews_html",
-                    "pdf_technical_html",
-                    "pdf_mobile_html",
-                )
-            )
-
-            if b.get("error"):
-                st.warning(b["error"])
-                continue
-
-            if not has_split_sections:
-                if b.get("pre_html"):
-                    st.markdown(b["pre_html"], unsafe_allow_html=True)
-                if b.get("fig") is not None:
-                    st.plotly_chart(b["fig"], width="stretch")
-                if b.get("post_fig") is not None:
-                    st.plotly_chart(b["post_fig"], width="stretch")
-                if b.get("post_html"):
-                    st.markdown(b["post_html"], unsafe_allow_html=True)
-            else:
-                if b.get("pdf_intro_html"):
-                    st.markdown(b["pdf_intro_html"], unsafe_allow_html=True)
-
-                c1, c2 = st.columns([0.88, 0.12])
-                with c1:
-                    st.markdown("**Profilvollständigkeit / Lokale Verzeichnisse / Nach Bewertung**")
-                with c2:
-                    st.toggle("PDF", value=pdf_section_visible("local_seo_summary"), key=pdf_toggle_key("local_seo_summary"), label_visibility="collapsed")
-                if b.get("pdf_summary_html"):
-                    st.markdown(b["pdf_summary_html"], unsafe_allow_html=True)
-
-                if b.get("pdf_google_presence_html"):
-                    st.markdown(b["pdf_google_presence_html"], unsafe_allow_html=True)
-                if b.get("fig") is not None:
-                    st.plotly_chart(b["fig"], width="stretch")
-                if b.get("post_fig") is not None:
-                    st.plotly_chart(b["post_fig"], width="stretch")
-                if b.get("pdf_reviews_html"):
-                    st.markdown(b["pdf_reviews_html"], unsafe_allow_html=True)
-
-                render_section_header("Technischer Quick-Check", "technical_quick_check")
-                if b.get("pdf_technical_html"):
-                    st.markdown(b["pdf_technical_html"], unsafe_allow_html=True)
-
-                render_section_header("Mobile Darstellung", "mobile_display")
-                if b.get("pdf_mobile_html"):
-                    st.markdown(b["pdf_mobile_html"], unsafe_allow_html=True)
             continue
 
         render_section_header(b.get("title", "Block"), b.get("id", "block"))

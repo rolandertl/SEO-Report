@@ -488,7 +488,7 @@ def _technical_quick_check_html(insites_report: dict | None, include_title: bool
     )
 
 
-def build_local_seo_fdm_block(
+def _build_local_seo_fdm_payload(
     ctx: ReportContext,
     uberall_input: dict,
     uberall_api_key: str = "",
@@ -674,9 +674,6 @@ def build_local_seo_fdm_block(
     google_presence_html = ""
     if has_fdm_profile:
         google_presence_html = (
-            "<div style='font-size:14px; line-height:1.6; margin-top:12px; font-weight:700;'>"
-            "Google Präsenz"
-            "</div>"
             "<div style='font-size:14px; line-height:1.6; margin-top:4px;'>"
             "Die Werte geben einen Überblick darüber, wie oft Ihr Profil in der Suche und in Maps eingeblendet wurde "
             "und wie viele Personen darauf geklickt haben."
@@ -697,9 +694,6 @@ def build_local_seo_fdm_block(
     )
     grid_cols = "1fr 1fr" if has_fdm_profile else "1fr"
     reviews_html = (
-        "<div style='margin-top: 0;'>"
-        "<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>Google Bewertungen</div>"
-        "</div>"
         f"<div style='display:grid; grid-template-columns:{grid_cols}; gap:14px; margin-top:18px; margin-bottom:18px;'>"
         + (
             _star_rating_html(rating, int(review_count))
@@ -726,26 +720,72 @@ def build_local_seo_fdm_block(
         "</div>"
     )
 
-    technical_html = _technical_quick_check_html(insites_report, include_title=True) if insites_report else ""
     technical_body_html = _technical_quick_check_html(insites_report, include_title=False) if insites_report else ""
-    mobile_html = _mobile_audit_html(insites_mobile_data, include_title=True) if insites_mobile_data else ""
     mobile_body_html = _mobile_audit_html(insites_mobile_data, include_title=False) if insites_mobile_data else ""
 
-    pre_html = intro_html + summary_html + google_presence_html
-    post_html = reviews_html + technical_html + ("<div class='pdf-page-break'></div>" if insites_mobile_data else "") + mobile_html
-
     return {
-        "id": "local_seo_fdm",
-        "title": "Local SEO – Auswertung Ihres Unternehmensprofils",
-        "accent_token": "COLOR_2",
-        "pre_html": pre_html,
-        "fig": area_fig,
-        "post_fig": table_fig,
-        "post_html": post_html,
-        "pdf_intro_html": intro_html,
-        "pdf_summary_html": summary_html,
-        "pdf_google_presence_html": google_presence_html,
-        "pdf_reviews_html": reviews_html,
-        "pdf_technical_html": technical_body_html,
-        "pdf_mobile_html": mobile_body_html,
+        "intro_html": intro_html,
+        "summary_html": summary_html,
+        "google_presence_html": google_presence_html,
+        "google_presence_fig": area_fig,
+        "google_presence_table_fig": table_fig,
+        "reviews_html": reviews_html,
+        "technical_html": technical_body_html,
+        "mobile_html": mobile_body_html,
     }
+
+
+def build_local_seo_fdm_blocks(
+    ctx: ReportContext,
+    uberall_input: dict,
+    uberall_api_key: str = "",
+    google_places_api_key: str = "",
+    insites_api_key: str = "",
+) -> list[dict]:
+    payload = _build_local_seo_fdm_payload(
+        ctx,
+        uberall_input,
+        uberall_api_key=uberall_api_key,
+        google_places_api_key=google_places_api_key,
+        insites_api_key=insites_api_key,
+    )
+
+    blocks: list[dict] = [
+        {
+            "id": "local_seo_summary",
+            "title": "Local SEO – Auswertung Ihres Unternehmensprofils",
+            "accent_token": "COLOR_2",
+            "pre_html": (payload.get("intro_html") or "") + (payload.get("summary_html") or ""),
+        },
+        {
+            "id": "google_presence",
+            "title": "Google Präsenz",
+            "accent_token": "COLOR_2",
+            "pre_html": payload.get("google_presence_html")
+            or "<div style='font-size:14px; line-height:1.6; color:#666;'>Diese Auswertung setzt ein passendes Firmendaten-Manager-Unternehmensprofil voraus.</div>",
+            "fig": payload.get("google_presence_fig"),
+            "post_fig": payload.get("google_presence_table_fig"),
+        },
+        {
+            "id": "google_reviews",
+            "title": "Google Bewertungen",
+            "accent_token": "COLOR_2",
+            "pre_html": payload.get("reviews_html"),
+        },
+        {
+            "id": "technical_quick_check",
+            "title": "Technischer Quick-Check",
+            "accent_token": "COLOR_2",
+            "pre_html": payload.get("technical_html")
+            or "<div style='font-size:14px; line-height:1.6; color:#666;'>Für diesen Abschnitt liegen aktuell keine Daten vor.</div>",
+        },
+        {
+            "id": "mobile_display",
+            "title": "Mobile Darstellung",
+            "accent_token": "COLOR_2",
+            "pre_html": payload.get("mobile_html")
+            or "<div style='font-size:14px; line-height:1.6; color:#666;'>Für diesen Abschnitt liegen aktuell keine Daten vor.</div>",
+        },
+    ]
+
+    return blocks
