@@ -6,6 +6,7 @@ from core.context import ReportContext
 from core.config import UBERALL_LIVE_MODE, GOOGLE_PLACES_LIVE_MODE, CI_COLORS
 from services.google_places import fetch_rating_and_review_count
 from services.insites import get_report as insites_get_report
+from services.llm import translate_term_cached
 from services.uberall import get as uberall_get
 from metrics.uberall_insights import _fetch_insights, _fetch_customer_feedback, _fetch_profile_completeness
 from components.charts import area_chart, table_chart
@@ -311,32 +312,20 @@ def _info_chip() -> str:
     )
 
 
-def _translate_gbp_category(category: str | None) -> str:
+def _translate_gbp_category(category: str | None, openai_api_key: str = "") -> str:
     value = (category or "").strip()
     if not value:
         return "nicht verfügbar"
-    mapping = {
-        "Plumber": "Installateur",
-        "Gasfitter": "Gasinstallateur",
-        "Tile contractor": "Fliesenleger",
-        "Bathroom remodeler": "Badsanierer",
-        "Bathroom supply store": "Badezimmerausstatter",
-        "Building firm": "Baufirma",
-        "Construction company": "Bauunternehmen",
-        "Water damage restoration service": "Wasserschadensanierung",
-        "Fire damage restoration service": "Brandschadensanierung",
-        "HVAC contractor": "Heizungs- und Klimatechniker",
-    }
-    return mapping.get(value, value)
+    return translate_term_cached(openai_api_key, value, fallback=value)
 
 
-def _gbp_status_card_html(google_business_profile: dict | None) -> str:
+def _gbp_status_card_html(google_business_profile: dict | None, openai_api_key: str = "") -> str:
     gbp = google_business_profile or {}
     claimed = gbp.get("is_listing_claimed")
     opening_hours = gbp.get("has_opening_hours")
     categories = gbp.get("gmb_industries") or gbp.get("industries") or []
     main_category = categories[0] if isinstance(categories, list) and categories else None
-    main_category = _translate_gbp_category(main_category)
+    main_category = _translate_gbp_category(main_category, openai_api_key=openai_api_key)
 
     def yes_no_row(ok_value, label: str) -> str:
         if ok_value is True:
@@ -569,6 +558,7 @@ def _build_local_seo_fdm_payload(
     uberall_api_key: str = "",
     google_places_api_key: str = "",
     insites_api_key: str = "",
+    openai_api_key: str = "",
 ) -> dict:
     location_id = (uberall_input or {}).get("location_id", "").strip()
     name = (uberall_input or {}).get("name", "").strip()
@@ -744,7 +734,7 @@ def _build_local_seo_fdm_payload(
             profile_completeness,
             directories_found=directories_found_count,
             directories_total=directories_total,
-            gbp_status_html=_gbp_status_card_html(google_business_profile),
+            gbp_status_html=_gbp_status_card_html(google_business_profile, openai_api_key=openai_api_key),
         )
         summary_html += f"<div style='margin-top:8px; color:#666; font-size:12px;'>Quelle: {source_label}</div>"
 
@@ -824,6 +814,7 @@ def build_local_seo_fdm_blocks(
     uberall_api_key: str = "",
     google_places_api_key: str = "",
     insites_api_key: str = "",
+    openai_api_key: str = "",
 ) -> list[dict]:
     payload = _build_local_seo_fdm_payload(
         ctx,
@@ -831,6 +822,7 @@ def build_local_seo_fdm_blocks(
         uberall_api_key=uberall_api_key,
         google_places_api_key=google_places_api_key,
         insites_api_key=insites_api_key,
+        openai_api_key=openai_api_key,
     )
 
     blocks: list[dict] = [

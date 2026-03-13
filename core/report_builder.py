@@ -39,6 +39,7 @@ def build_report(
             uberall_api_key=uberall_api_key,
             google_places_api_key=google_places_api_key,
             insites_api_key=insites_api_key,
+            openai_api_key=openai_api_key,
         )
     )
     blocks.append(build_ai_overview_block(ctx, openai_api_key))

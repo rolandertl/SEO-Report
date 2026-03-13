@@ -81,3 +81,50 @@ def generate_comment_cached(api_key: str, title: str, facts: dict, fallback: str
     except Exception:
         pass
     return text
+
+
+def translate_term_cached(api_key: str, text: str, fallback: str = "") -> str:
+    source = (text or "").strip()
+    if not source:
+        return fallback
+
+    key = _stable_key("translate_term_de_at", {"text": source})
+    cache = _read_cache()
+    cached = cache.get(key)
+    if isinstance(cached, str) and cached.strip():
+        return cached.strip()
+
+    if DEV_MODE:
+        return fallback or source
+
+    try:
+        from openai import OpenAI  # noqa: WPS433
+
+        client = OpenAI(api_key=api_key)
+        resp = client.chat.completions.create(
+            model="gpt-5-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        "Übersetze diesen englischen Google-Business-Profil-Kategorienamen ins Deutsche (AT). "
+                        "Gib nur die kurze deutsche Bezeichnung aus, ohne Erklärung, ohne Anführungszeichen, "
+                        "ohne zusätzlichen Text.\n"
+                        f"Kategorie: {source}"
+                    ),
+                }
+            ],
+        )
+        translated = resp.choices[0].message.content.strip()
+    except Exception:
+        return fallback or source
+
+    if not translated:
+        return fallback or source
+
+    cache[key] = translated
+    try:
+        _write_cache(cache)
+    except Exception:
+        pass
+    return translated
