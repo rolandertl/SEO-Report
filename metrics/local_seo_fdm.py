@@ -149,6 +149,7 @@ def _gauge_html(
     percent: int,
     directories_found: int | None = None,
     directories_total: int = 36,
+    gbp_status_html: str = "",
 ) -> str:
     pct = max(0, min(100, int(percent)))
     theta_deg = 180 - (pct * 1.8)
@@ -200,7 +201,7 @@ def _gauge_html(
     heading_style = "font-size:28px; font-weight:700; margin:0 0 12px 0; line-height:1.2;"
 
     return (
-        "<div style='margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:14px;'>"
+        "<div style='margin-top:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;'>"
         "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
         f"<div style='{heading_style}'>Profilvollständigkeit</div>"
         "<div style='display:flex; align-items:center; gap:16px;'>"
@@ -226,6 +227,10 @@ def _gauge_html(
         "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
         f"<div style='{heading_style}'>Lokale Verzeichnisse</div>"
         f"{directories_value}"
+        "</div>"
+        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
+        f"<div style='{heading_style}'>Google Business Profil</div>"
+        f"{gbp_status_html}"
         "</div>"
         "</div>"
     )
@@ -296,6 +301,72 @@ def _rating_distribution_card_html(distribution: list[dict] | None) -> str:
         "<div style='font-weight:700; margin-bottom:8px;'>Nach Bewertung</div>"
         f"{_rating_distribution_html(distribution)}"
         "</div>"
+    )
+
+
+def _info_chip() -> str:
+    return (
+        "<span style='display:inline-grid; place-items:center; width:24px; height:24px; "
+        "border-radius:999px; background:#4D8CF5; color:white; font-size:15px; font-weight:800;'>i</span>"
+    )
+
+
+def _translate_gbp_category(category: str | None) -> str:
+    value = (category or "").strip()
+    if not value:
+        return "nicht verfügbar"
+    mapping = {
+        "Plumber": "Installateur",
+        "Gasfitter": "Gasinstallateur",
+        "Tile contractor": "Fliesenleger",
+        "Bathroom remodeler": "Badsanierer",
+        "Bathroom supply store": "Badezimmerausstatter",
+        "Building firm": "Baufirma",
+        "Construction company": "Bauunternehmen",
+        "Water damage restoration service": "Wasserschadensanierung",
+        "Fire damage restoration service": "Brandschadensanierung",
+        "HVAC contractor": "Heizungs- und Klimatechniker",
+    }
+    return mapping.get(value, value)
+
+
+def _gbp_status_card_html(google_business_profile: dict | None) -> str:
+    gbp = google_business_profile or {}
+    claimed = gbp.get("is_listing_claimed")
+    opening_hours = gbp.get("has_opening_hours")
+    categories = gbp.get("gmb_industries") or gbp.get("industries") or []
+    main_category = categories[0] if isinstance(categories, list) and categories else None
+    main_category = _translate_gbp_category(main_category)
+
+    def yes_no_row(ok_value, label: str) -> str:
+        if ok_value is True:
+            icon = _status_chip(True)
+        elif ok_value is False:
+            icon = _status_chip(False)
+        else:
+            icon = _info_chip()
+        return (
+            "<div style='display:flex; gap:10px; align-items:flex-start; margin:12px 0;'>"
+            f"{icon}"
+            f"<div style='font-size:17px; line-height:1.4; font-weight:700; color:#2F2F35;'>{label}</div>"
+            "</div>"
+        )
+
+    category_row = (
+        "<div style='display:flex; gap:10px; align-items:flex-start; margin:12px 0 0 0;'>"
+        f"{_info_chip()}"
+        "<div style='font-size:17px; line-height:1.4; color:#2F2F35;'>"
+        f"<span style='font-weight:700;'>Hauptkategorie:</span> {main_category}"
+        "</div>"
+        "</div>"
+    )
+
+    return (
+        "<div style='margin-top:8px;'>"
+        + yes_no_row(claimed, "Google Business Profil beansprucht")
+        + yes_no_row(opening_hours, "Öffnungszeiten angeführt")
+        + category_row
+        + "</div>"
     )
 
 
@@ -519,6 +590,7 @@ def _build_local_seo_fdm_payload(
     directories_total = 36
     insites_mobile_data = {}
     insites_report = {}
+    google_business_profile = {}
 
     if insites_report_id and insites_api_key:
         try:
@@ -540,6 +612,7 @@ def _build_local_seo_fdm_payload(
                 directories_total = int(float(raw_total))
             insites_mobile_data = report.get("mobile") or {}
             insites_report = report
+            google_business_profile = report.get("google_business_profile") or {}
         except Exception:
             pass
 
@@ -671,6 +744,7 @@ def _build_local_seo_fdm_payload(
             profile_completeness,
             directories_found=directories_found_count,
             directories_total=directories_total,
+            gbp_status_html=_gbp_status_card_html(google_business_profile),
         )
         summary_html += f"<div style='margin-top:8px; color:#666; font-size:12px;'>Quelle: {source_label}</div>"
 
