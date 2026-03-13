@@ -408,7 +408,7 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("Report generieren", type="primary")
-    st.caption("Version 1.0.15")
+    st.caption("Version 1.0.16")
 
 
 domain = safe_domain(domain_raw)
@@ -526,6 +526,9 @@ if blocks:
   border-bottom: 2px solid #EE316B;
   line-height: 1.2;
 }
+div[data-baseweb="switch"] input:checked + div {
+  background-color: #2DBE8D !important;
+}
 </style>
 """,
         unsafe_allow_html=True,
@@ -549,37 +552,59 @@ if blocks:
         if b.get("id") == "local_seo_fdm":
             render_section_header(b.get("title", "Block"), "local_seo_fdm")
 
+            has_split_sections = any(
+                key in b
+                for key in (
+                    "pdf_intro_html",
+                    "pdf_summary_html",
+                    "pdf_google_presence_html",
+                    "pdf_reviews_html",
+                    "pdf_technical_html",
+                    "pdf_mobile_html",
+                )
+            )
+
             if b.get("error"):
                 st.warning(b["error"])
                 continue
 
-            if b.get("pdf_intro_html"):
-                st.markdown(b["pdf_intro_html"], unsafe_allow_html=True)
+            if not has_split_sections:
+                if b.get("pre_html"):
+                    st.markdown(b["pre_html"], unsafe_allow_html=True)
+                if b.get("fig") is not None:
+                    st.plotly_chart(b["fig"], width="stretch")
+                if b.get("post_fig") is not None:
+                    st.plotly_chart(b["post_fig"], width="stretch")
+                if b.get("post_html"):
+                    st.markdown(b["post_html"], unsafe_allow_html=True)
+            else:
+                if b.get("pdf_intro_html"):
+                    st.markdown(b["pdf_intro_html"], unsafe_allow_html=True)
 
-            c1, c2 = st.columns([0.88, 0.12])
-            with c1:
-                st.markdown("**Profilvollständigkeit / Lokale Verzeichnisse / Nach Bewertung**")
-            with c2:
-                st.toggle("PDF", value=pdf_section_visible("local_seo_summary"), key=pdf_toggle_key("local_seo_summary"), label_visibility="collapsed")
-            if b.get("pdf_summary_html"):
-                st.markdown(b["pdf_summary_html"], unsafe_allow_html=True)
+                c1, c2 = st.columns([0.88, 0.12])
+                with c1:
+                    st.markdown("**Profilvollständigkeit / Lokale Verzeichnisse / Nach Bewertung**")
+                with c2:
+                    st.toggle("PDF", value=pdf_section_visible("local_seo_summary"), key=pdf_toggle_key("local_seo_summary"), label_visibility="collapsed")
+                if b.get("pdf_summary_html"):
+                    st.markdown(b["pdf_summary_html"], unsafe_allow_html=True)
 
-            if b.get("pdf_google_presence_html"):
-                st.markdown(b["pdf_google_presence_html"], unsafe_allow_html=True)
-            if b.get("fig") is not None:
-                st.plotly_chart(b["fig"], width="stretch")
-            if b.get("post_fig") is not None:
-                st.plotly_chart(b["post_fig"], width="stretch")
-            if b.get("pdf_reviews_html"):
-                st.markdown(b["pdf_reviews_html"], unsafe_allow_html=True)
+                if b.get("pdf_google_presence_html"):
+                    st.markdown(b["pdf_google_presence_html"], unsafe_allow_html=True)
+                if b.get("fig") is not None:
+                    st.plotly_chart(b["fig"], width="stretch")
+                if b.get("post_fig") is not None:
+                    st.plotly_chart(b["post_fig"], width="stretch")
+                if b.get("pdf_reviews_html"):
+                    st.markdown(b["pdf_reviews_html"], unsafe_allow_html=True)
 
-            render_section_header("Technischer Quick-Check", "technical_quick_check")
-            if b.get("pdf_technical_html"):
-                st.markdown(b["pdf_technical_html"], unsafe_allow_html=True)
+                render_section_header("Technischer Quick-Check", "technical_quick_check")
+                if b.get("pdf_technical_html"):
+                    st.markdown(b["pdf_technical_html"], unsafe_allow_html=True)
 
-            render_section_header("Mobile Darstellung", "mobile_display")
-            if b.get("pdf_mobile_html"):
-                st.markdown(b["pdf_mobile_html"], unsafe_allow_html=True)
+                render_section_header("Mobile Darstellung", "mobile_display")
+                if b.get("pdf_mobile_html"):
+                    st.markdown(b["pdf_mobile_html"], unsafe_allow_html=True)
             continue
 
         render_section_header(b.get("title", "Block"), b.get("id", "block"))
