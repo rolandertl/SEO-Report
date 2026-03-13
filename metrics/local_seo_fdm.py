@@ -202,8 +202,8 @@ def _gauge_html(
     heading_style = "font-size:28px; font-weight:700; margin:0 0 12px 0; line-height:1.2;"
 
     return (
-        "<div style='margin-top:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;'>"
-        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
+        "<div class='pdf-stack-grid' style='margin-top:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;'>"
+        "<div class='pdf-stack-card' style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
         f"<div style='{heading_style}'>Profilvollständigkeit</div>"
         "<div style='display:flex; align-items:center; gap:16px;'>"
         "<div style='width:250px; max-width:100%;'>"
@@ -225,11 +225,11 @@ def _gauge_html(
         "</div>"
         "</div>"
         "</div>"
-        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
+        "<div class='pdf-stack-card' style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
         f"<div style='{heading_style}'>Lokale Verzeichnisse</div>"
         f"{directories_value}"
         "</div>"
-        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
+        "<div class='pdf-stack-card' style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
         f"<div style='{heading_style}'>Google Business Profil</div>"
         f"{gbp_status_html}"
         "</div>"
@@ -262,7 +262,7 @@ def _star_rating_html(rating: float, review_count: int) -> str:
         stars.append(star_img(fill))
     stars_html = "".join(stars)
     return f"""
-<div style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;">
+<div class="pdf-stack-card" style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;">
   <div style="font-weight:700; margin-bottom:8px;">Google Bewertungen</div>
   <div style="font-size:46px; font-weight:800; line-height:1;">{r:.1f}</div>
   <div style="display:flex; align-items:center; gap:2px; margin-top:8px;">
@@ -278,7 +278,7 @@ def _response_rate_html(percent: int | None) -> str:
     label = "nicht verfügbar" if percent is None else f"{pct}%"
     desc = "Wert aktuell nicht im API-Response enthalten." if percent is None else "Antwortrate"
     return f"""
-<div style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;">
+<div class="pdf-stack-card" style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;">
   <div style="font-weight:700; margin-bottom:8px;">Antwortrate auf Bewertungen</div>
   <div style="display:flex; align-items:center; gap:18px;">
     <div style="
@@ -298,7 +298,7 @@ def _response_rate_html(percent: int | None) -> str:
 
 def _rating_distribution_card_html(distribution: list[dict] | None) -> str:
     return (
-        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
+        "<div class='pdf-stack-card' style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
         "<div style='font-weight:700; margin-bottom:8px;'>Bewertungen nach Sternen</div>"
         f"{_rating_distribution_html(distribution)}"
         "</div>"
@@ -766,7 +766,7 @@ def _build_local_seo_fdm_payload(
     )
     grid_cols = "1fr 1fr 1fr" if has_fdm_profile else "1fr"
     reviews_html = (
-        f"<div style='display:grid; grid-template-columns:{grid_cols}; gap:14px; margin-top:18px; margin-bottom:18px;'>"
+        f"<div class='pdf-stack-grid' style='display:grid; grid-template-columns:{grid_cols}; gap:14px; margin-top:18px; margin-bottom:18px;'>"
         + (
             _star_rating_html(rating, int(review_count))
             if rating is not None and review_count is not None
