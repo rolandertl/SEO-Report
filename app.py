@@ -21,6 +21,8 @@ if "blocks" not in st.session_state:
 
 if "comment_overrides" not in st.session_state:
     st.session_state["comment_overrides"] = {}
+if "report_title_override" not in st.session_state:
+    st.session_state["report_title_override"] = "SEO-Report"
 # --- SESSION STATE INIT END ---
 
 
@@ -225,7 +227,7 @@ def render_report_html(domain: str, start_date: date, end_date: date, blocks: li
         )
 
     return tpl.render(
-        title="SEO-Report",
+        title=st.session_state.get("report_title_override", "SEO-Report"),
         domain=domain,
         start_date=start_date.isoformat(),
         end_date=end_date.isoformat(),
@@ -243,8 +245,33 @@ if not require_secrets():
 if not require_access_pin():
     st.stop()
 
-st.title("SEO-Report")
-st.caption("Google.at · Mobile")
+c_title_1, c_title_2 = st.columns([0.92, 0.08])
+with c_title_1:
+    st.title(st.session_state.get("report_title_override", "SEO-Report"))
+    st.caption("Google.at · Mobile")
+with c_title_2:
+    if "edit_report_title" not in st.session_state:
+        st.session_state["edit_report_title"] = False
+    if st.button("✏️", key="btn_report_title", help="Report-Titel bearbeiten"):
+        st.session_state["edit_report_title"] = not st.session_state["edit_report_title"]
+
+if st.session_state.get("edit_report_title", False):
+    new_report_title = st.text_input(
+        "Report-Titel",
+        value=st.session_state.get("report_title_override", "SEO-Report"),
+        key="report_title_input",
+    )
+    t1, t2 = st.columns(2)
+    with t1:
+        if st.button("Titel speichern", key="save_report_title"):
+            st.session_state["report_title_override"] = (new_report_title or "").strip() or "SEO-Report"
+            st.session_state["edit_report_title"] = False
+            st.rerun()
+    with t2:
+        if st.button("Titel zurücksetzen", key="reset_report_title"):
+            st.session_state["report_title_override"] = "SEO-Report"
+            st.session_state["edit_report_title"] = False
+            st.rerun()
 
 
 # -----------------------------
@@ -291,7 +318,7 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("Report generieren", type="primary")
-    st.caption("Version 1.0.13")
+    st.caption("Version 1.0.14")
 
 
 domain = safe_domain(domain_raw)

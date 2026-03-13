@@ -135,9 +135,9 @@ def _rating_distribution_html(distribution: list[dict] | None) -> str:
         pct = (count / total) * 100.0 if total else 0.0
         bars += (
             "<div style='display:grid; grid-template-columns:28px 1fr 42px; gap:10px; align-items:center; margin:8px 0;'>"
-            f"<div style='font-weight:700; color:#666;'>{rating} <span style='color:#A28BC9;'>★</span></div>"
+            f"<div style='font-weight:700; color:#666;'>{rating} <span style='color:#EEDC24;'>★</span></div>"
             "<div style='height:12px; border-radius:999px; background:#EEF1F5; overflow:hidden;'>"
-            f"<div style='width:{pct:.1f}%; height:100%; border-radius:999px; background:#9B8BC8;'></div>"
+            f"<div style='width:{pct:.1f}%; height:100%; border-radius:999px; background:#EEDC24;'></div>"
             "</div>"
             f"<div style='text-align:right; font-weight:700; color:#666;'>{int(round(pct))}%</div>"
             "</div>"
