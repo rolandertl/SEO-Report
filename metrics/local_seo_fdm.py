@@ -149,7 +149,6 @@ def _gauge_html(
     percent: int,
     directories_found: int | None = None,
     directories_total: int = 36,
-    rating_distribution: list[dict] | None = None,
 ) -> str:
     pct = max(0, min(100, int(percent)))
     theta_deg = 180 - (pct * 1.8)
@@ -201,7 +200,7 @@ def _gauge_html(
     heading_style = "font-size:28px; font-weight:700; margin:0 0 12px 0; line-height:1.2;"
 
     return (
-        "<div style='margin-top:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;'>"
+        "<div style='margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:14px;'>"
         "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
         f"<div style='{heading_style}'>Profilvollständigkeit</div>"
         "<div style='display:flex; align-items:center; gap:16px;'>"
@@ -227,10 +226,6 @@ def _gauge_html(
         "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
         f"<div style='{heading_style}'>Lokale Verzeichnisse</div>"
         f"{directories_value}"
-        "</div>"
-        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
-        f"<div style='{heading_style}'>Nach Bewertung</div>"
-        f"{_rating_distribution_html(rating_distribution)}"
         "</div>"
         "</div>"
     )
@@ -293,6 +288,15 @@ def _response_rate_html(percent: int | None) -> str:
   </div>
 </div>
 """
+
+
+def _rating_distribution_card_html(distribution: list[dict] | None) -> str:
+    return (
+        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
+        "<div style='font-weight:700; margin-bottom:8px;'>Nach Bewertung</div>"
+        f"{_rating_distribution_html(distribution)}"
+        "</div>"
+    )
 
 
 def _status_chip(ok: bool) -> str:
@@ -667,7 +671,6 @@ def _build_local_seo_fdm_payload(
             profile_completeness,
             directories_found=directories_found_count,
             directories_total=directories_total,
-            rating_distribution=uberall_feedback.get("rating_distribution"),
         )
         summary_html += f"<div style='margin-top:8px; color:#666; font-size:12px;'>Quelle: {source_label}</div>"
 
@@ -692,7 +695,12 @@ def _build_local_seo_fdm_payload(
         if has_fdm_profile
         else ""
     )
-    grid_cols = "1fr 1fr" if has_fdm_profile else "1fr"
+    distribution_card_html = (
+        _rating_distribution_card_html(uberall_feedback.get("rating_distribution"))
+        if has_fdm_profile
+        else ""
+    )
+    grid_cols = "1fr 1fr 1fr" if has_fdm_profile else "1fr"
     reviews_html = (
         f"<div style='display:grid; grid-template-columns:{grid_cols}; gap:14px; margin-top:18px; margin-bottom:18px;'>"
         + (
@@ -705,6 +713,7 @@ def _build_local_seo_fdm_payload(
                 "</div>"
             )
         )
+        + distribution_card_html
         + response_card_html
         + "</div>"
         + (
