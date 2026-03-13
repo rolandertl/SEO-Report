@@ -219,18 +219,9 @@ h2 {
 
     <h2 class="toc-title">Inhaltsverzeichnis</h2>
 
-    <div class="toc-item">Sichtbarkeitsindex – Entwicklung der organischen Sichtbarkeit.</div>
-    <div class="toc-item">Top URLs – Stärkste Seiten nach Sichtbarkeitsbeitrag.</div>
-    <div class="toc-item">Keyword-Verlauf – Entwicklung der rankenden Keywords.</div>
-    <div class="toc-item">Aktuelle Rankings – Wichtigste Positionen.</div>
-    <div class="toc-item">Gewinner-Keywords – Positive Ranking-Entwicklung.</div>
-    <div class="toc-item">Neueinsteiger – Neue Rankings im Zeitraum.</div>
-    <div class="toc-item">Verlierer – Rückläufige Positionen.</div>
-    <div class="toc-item">Local SEO – Firmendaten Manager Auswertung.</div>
-    <div class="toc-item">Technischer Quick-Check – Broken Links, SSL, Sitemap und robots.txt.</div>
-    <div class="toc-item">Mobile Darstellung – Smartphone-Check und Nutzerfreundlichkeit.</div>
-    <div class="toc-item">KI-Overview – Sichtbarkeit der Marke aus KI-Perspektive.</div>
-    <div class="toc-item">Backlinks – Entwicklung des Linkprofils.</div>
+    {% for item in toc_items %}
+    <div class="toc-item">{{ item }}</div>
+    {% endfor %}
 
 </div>
 

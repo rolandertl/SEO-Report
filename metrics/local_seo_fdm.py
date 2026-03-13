@@ -316,7 +316,7 @@ def _mobile_row(title: str, description: str, ok: bool) -> str:
     )
 
 
-def _mobile_audit_html(mobile_data: dict | None) -> str:
+def _mobile_audit_html(mobile_data: dict | None, include_title: bool = True) -> str:
     m = mobile_data or {}
     has_horizontal_scroll = bool(m.get("has_horizontal_scroll"))
     has_small_text = bool(m.get("has_small_text"))
@@ -357,9 +357,14 @@ def _mobile_audit_html(mobile_data: dict | None) -> str:
         )
     )
 
+    title_html = (
+        "<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>Mobile Darstellung</div>"
+        if include_title
+        else ""
+    )
     return (
         "<div style='margin-top:22px;'>"
-        "<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>Mobile Darstellung</div>"
+        f"{title_html}"
         "<div style='font-size:14px; line-height:1.6; margin-top:8px;'>"
         "Die mobile Nutzererfahrung ist ein zentraler Qualitätsfaktor. Diese Auswertung zeigt, "
         "wie gut Ihre Website auf Smartphones technisch und visuell funktioniert."
@@ -418,7 +423,7 @@ def _quick_check_row(label: str, value_text: str, level: str) -> str:
     )
 
 
-def _technical_quick_check_html(insites_report: dict | None) -> str:
+def _technical_quick_check_html(insites_report: dict | None, include_title: bool = True) -> str:
     r = insites_report or {}
 
     # Broken links
@@ -467,9 +472,14 @@ def _technical_quick_check_html(insites_report: dict | None) -> str:
         + _quick_check_row("Robots.txt", robots_value, robots_level)
     )
 
+    title_html = (
+        "<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>Technischer Quick-Check</div>"
+        if include_title
+        else ""
+    )
     return (
         "<div style='margin-top:56px;'>"
-        "<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>Technischer Quick-Check</div>"
+        f"{title_html}"
         "<div style='font-size:14px; line-height:1.6; margin-top:8px;'>"
         "Ein kompakter Blick auf zentrale technische Grundlagen Ihrer Website."
         "</div>"
@@ -629,7 +639,7 @@ def build_local_seo_fdm_block(
         except Exception:
             pass
 
-    pre_html = (
+    intro_html = (
         "<div style='font-size:14px; line-height:1.6; margin-top:6px;'>"
         "Dieser Abschnitt fasst alle relevanten Local-SEO-Daten rund um Ihr Unternehmensprofil zusammen. "
         "Neben den Angaben aus dem Firmendaten-Manager fließen auch ergänzende Google-Signale ein, "
@@ -638,14 +648,14 @@ def build_local_seo_fdm_block(
     )
 
     if not has_fdm_profile:
-        pre_html += (
+        summary_html = (
             "<div style='margin-top:8px; color:#666; font-size:12px;'>"
             "Für diese Domain wurde kein passendes Firmendaten-Manager-Unternehmensprofil gefunden. "
             "Daher werden FDM-abhängige Kennzahlen in diesem Abschnitt ausgeblendet."
             "</div>"
         )
     else:
-        pre_html += (
+        summary_html = (
             "<div style='font-size:14px; line-height:1.6; margin-top:12px; font-weight:700;'>Profilvollständigkeit</div>"
             "<div style='font-size:14px; line-height:1.6; margin-top:4px;'>"
             "Ein vollständig gepflegtes Unternehmensprofil erhöht die Chance, bei lokalen Suchanfragen besser gefunden "
@@ -653,16 +663,17 @@ def build_local_seo_fdm_block(
             "potenziellen Kund:innen."
             "</div>"
         )
-        pre_html += _gauge_html(
+        summary_html += _gauge_html(
             profile_completeness,
             directories_found=directories_found_count,
             directories_total=directories_total,
             rating_distribution=uberall_feedback.get("rating_distribution"),
         )
-        pre_html += f"<div style='margin-top:8px; color:#666; font-size:12px;'>Quelle: {source_label}</div>"
+        summary_html += f"<div style='margin-top:8px; color:#666; font-size:12px;'>Quelle: {source_label}</div>"
 
+    google_presence_html = ""
     if has_fdm_profile:
-        pre_html += (
+        google_presence_html = (
             "<div style='font-size:14px; line-height:1.6; margin-top:12px; font-weight:700;'>"
             "Google Präsenz"
             "</div>"
@@ -685,7 +696,7 @@ def build_local_seo_fdm_block(
         else ""
     )
     grid_cols = "1fr 1fr" if has_fdm_profile else "1fr"
-    post_html = (
+    reviews_html = (
         "<div style='margin-top: 0;'>"
         "<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>Google Bewertungen</div>"
         "</div>"
@@ -713,10 +724,15 @@ def build_local_seo_fdm_block(
         + "<div style='font-size:14px; line-height:1.6; margin-top:10px;'>"
         "Ebenso entscheidend ist der professionelle Umgang mit Feedback. Zeitnahe und wertschätzende Antworten auf Bewertungen – insbesondere auf kritische Rückmeldungen – zeigen Kundennähe, Engagement und Serviceorientierung. Unternehmen, die aktiv reagieren, hinterlassen nicht nur einen besseren Eindruck, sondern stärken langfristig ihre Reputation und Kundenbindung."
         "</div>"
-        + (_technical_quick_check_html(insites_report) if insites_report else "")
-        + ("<div class='pdf-page-break'></div>" if insites_mobile_data else "")
-        + (_mobile_audit_html(insites_mobile_data) if insites_mobile_data else "")
     )
+
+    technical_html = _technical_quick_check_html(insites_report, include_title=True) if insites_report else ""
+    technical_body_html = _technical_quick_check_html(insites_report, include_title=False) if insites_report else ""
+    mobile_html = _mobile_audit_html(insites_mobile_data, include_title=True) if insites_mobile_data else ""
+    mobile_body_html = _mobile_audit_html(insites_mobile_data, include_title=False) if insites_mobile_data else ""
+
+    pre_html = intro_html + summary_html + google_presence_html
+    post_html = reviews_html + technical_html + ("<div class='pdf-page-break'></div>" if insites_mobile_data else "") + mobile_html
 
     return {
         "id": "local_seo_fdm",
@@ -726,4 +742,10 @@ def build_local_seo_fdm_block(
         "fig": area_fig,
         "post_fig": table_fig,
         "post_html": post_html,
+        "pdf_intro_html": intro_html,
+        "pdf_summary_html": summary_html,
+        "pdf_google_presence_html": google_presence_html,
+        "pdf_reviews_html": reviews_html,
+        "pdf_technical_html": technical_body_html,
+        "pdf_mobile_html": mobile_body_html,
     }
