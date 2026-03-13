@@ -328,6 +328,20 @@ def normalize_blocks(blocks: list[dict] | None) -> list[dict]:
 
         return review_part, technical_part, mobile_part
 
+    def strip_known_heading(html: str, title: str) -> str:
+        raw = (html or "").strip()
+        if not raw:
+            return ""
+
+        heading_variants = [
+            f"<div style='margin-top: 0;'><div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>{title}</div></div>",
+            f"<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>{title}</div>",
+        ]
+        for variant in heading_variants:
+            if raw.startswith(variant):
+                raw = raw[len(variant):].lstrip()
+        return raw
+
     normalized: list[dict] = []
     for b in blocks or []:
         if not isinstance(b, dict):
@@ -347,6 +361,10 @@ def normalize_blocks(blocks: list[dict] | None) -> list[dict]:
             post_html = b.get("post_html") or ""
             summary_html, google_presence_html = split_at_heading(pre_html, "Google Präsenz")
             reviews_html, technical_html, mobile_html = split_reviews_parts(post_html)
+
+        reviews_html = strip_known_heading(reviews_html, "Google Bewertungen")
+        technical_html = strip_known_heading(technical_html, "Technischer Quick-Check")
+        mobile_html = strip_known_heading(mobile_html, "Mobile Darstellung")
 
         normalized.extend(
             [
@@ -476,7 +494,7 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("Report generieren", type="primary")
-    st.caption("Version 1.0.19")
+    st.caption("Version 1.0.20")
 
 
 domain = safe_domain(domain_raw)
