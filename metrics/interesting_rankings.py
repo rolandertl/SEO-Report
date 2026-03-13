@@ -4,6 +4,7 @@ import pandas as pd
 from core.context import ReportContext
 from core.config import DEV_MODE, SISTRIX_RANKING_BLOCKS_LIVE
 from services.sistrix_keyword_domain import fetch_keyword_domain_snapshot
+from services.llm import generate_comment
 from components.charts import table_chart
 
 
@@ -69,6 +70,54 @@ def _interest_score(position: float, sv: int, traffic: float) -> float:
     pos_factor = 1.0 / max(position, 1.0)
     vol = sv if sv > 0 else (traffic * 100.0)
     return pos_factor * math.log1p(vol)
+
+
+def _fallback_comment(df: pd.DataFrame) -> str:
+    top_rows = df.head(3)
+    keywords = ", ".join(str(x) for x in top_rows["kw"].tolist() if str(x).strip())
+    if not keywords:
+        return (
+            "Die Übersicht zeigt, bei welchen Suchanfragen Ihre Website bereits besonders gut sichtbar ist "
+            "oder ein starkes Potenzial besitzt. So erkennen wir, welche Themen schon heute Reichweite und "
+            "Relevanz aufbauen – und wo sich weitere Optimierungen besonders lohnen."
+        )
+    return (
+        f"Besonders relevant sind aktuell Suchanfragen wie {keywords}. "
+        "Sie zeigen, in welchen Themenfeldern Ihre Website bereits Sichtbarkeit aufgebaut hat und wo "
+        "sich zusätzliche Optimierungen besonders lohnen."
+    )
+
+
+def _ai_comment(df: pd.DataFrame, api_key: str) -> str:
+    if df.empty:
+        return _fallback_comment(df)
+
+    top_rows = []
+    for _, row in df.head(5).iterrows():
+        top_rows.append(
+            {
+                "keyword": str(row.get("kw", "")),
+                "position": int(round(float(row.get("position", 0)))),
+                "url": str(row.get("url", "")),
+                "search_volume": int(row.get("sv", 0) or 0),
+                "traffic": round(float(row.get("traffic", 0.0) or 0.0), 2),
+            }
+        )
+
+    facts = {
+        "domain": str(df.iloc[0].get("url", "")) if not df.empty else "",
+        "top_keywords": top_rows,
+        "instruction": (
+            "Beziehe dich konkret auf die wichtigsten Keywords und ihre Bedeutung. "
+            "Schreibe 2 bis 3 Sätze für einen Kundenreport, ohne Bulletpoints, ohne Übertreibung."
+        ),
+    }
+
+    try:
+        text = generate_comment(api_key, "Interessante Rankings", facts)
+        return text or _fallback_comment(df)
+    except Exception:
+        return _fallback_comment(df)
 
 
 def build_interesting_rankings_block(ctx: ReportContext, sistrix_api_key: str, openai_api_key: str) -> dict:
@@ -139,11 +188,7 @@ def build_interesting_rankings_block(ctx: ReportContext, sistrix_api_key: str, o
             "pre_html": pre_html,
             "fig": fig,
             "comment_title": "Einordnung",
-            "comment": (
-                "Diese Auswahl zeigt, bei welchen Suchanfragen Ihre Website bereits besonders gut sichtbar ist "
-                "oder ein starkes Nachfragepotenzial besitzt. Damit erkennen wir schnell, welche Themen heute "
-                "schon tragen und in welchen Bereichen sich gezielte weitere Optimierungen besonders lohnen."
-            ),
+            "comment": _ai_comment(df, openai_api_key),
         }
 
     except Exception as e:
