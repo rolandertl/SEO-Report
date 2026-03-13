@@ -283,7 +283,7 @@ def _response_rate_html(percent: int | None) -> str:
   <div style="display:flex; align-items:center; gap:18px;">
     <div style="
       width:120px; height:120px; border-radius:50%;
-      background:conic-gradient({CI_COLORS['COLOR_4']} 0 {pct*3.6}deg, #ECEAF7 {pct*3.6}deg 360deg);
+      background:conic-gradient(#EE316B 0 {pct*3.6}deg, #ECEAF7 {pct*3.6}deg 360deg);
       display:grid; place-items:center;
     ">
       <div style="width:88px; height:88px; border-radius:50%; background:white; display:grid; place-items:center; font-weight:800; font-size:22px;">
@@ -299,7 +299,7 @@ def _response_rate_html(percent: int | None) -> str:
 def _rating_distribution_card_html(distribution: list[dict] | None) -> str:
     return (
         "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
-        "<div style='font-weight:700; margin-bottom:8px;'>Nach Bewertung</div>"
+        "<div style='font-weight:700; margin-bottom:8px;'>Bewertungen nach Sternen</div>"
         f"{_rating_distribution_html(distribution)}"
         "</div>"
     )
