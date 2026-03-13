@@ -245,6 +245,7 @@ def _fetch_customer_feedback(ctx: ReportContext, loc_id: str, uberall_api_key: s
     response_rate_pct = _normalize_response_rate(
         feedback.get("reviewResponseRate") or feedback.get("responseRate") or feedback.get("answerRate")
     )
+    rating_distribution = feedback.get("countByRating") if isinstance(feedback.get("countByRating"), list) else []
     if response_rate_pct is None:
         replied = _to_float(feedback.get("repliedCount"), None)
         total = _to_float(feedback.get("ratingCount"), None)
@@ -328,6 +329,7 @@ def _fetch_customer_feedback(ctx: ReportContext, loc_id: str, uberall_api_key: s
         "average_rating": average_rating,
         "number_of_reviews": number_of_reviews,
         "review_response_rate_pct": response_rate_pct,
+        "rating_distribution": rating_distribution,
     }
 
 

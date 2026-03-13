@@ -108,7 +108,49 @@ def _find_location_by_domain(domain: str, uberall_api_key: str, max_per_page: in
     return None
 
 
-def _gauge_html(percent: int, directories_found: int | None = None, directories_total: int = 36) -> str:
+def _rating_distribution_html(distribution: list[dict] | None) -> str:
+    rows = distribution or []
+    counts_by_rating: dict[int, int] = {i: 0 for i in range(1, 6)}
+    total = 0
+
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        try:
+            rating = int(float(row.get("rating")))
+            count = int(float(row.get("count", 0)))
+        except Exception:
+            continue
+        if rating not in counts_by_rating or count < 0:
+            continue
+        counts_by_rating[rating] = count
+        total += count
+
+    if total <= 0:
+        return "<div style='margin-top:10px; color:#666;'>nicht verfügbar</div>"
+
+    bars = ""
+    for rating in range(5, 0, -1):
+        count = counts_by_rating.get(rating, 0)
+        pct = (count / total) * 100.0 if total else 0.0
+        bars += (
+            "<div style='display:grid; grid-template-columns:28px 1fr 42px; gap:10px; align-items:center; margin:8px 0;'>"
+            f"<div style='font-weight:700; color:#666;'>{rating} <span style='color:#A28BC9;'>★</span></div>"
+            "<div style='height:12px; border-radius:999px; background:#EEF1F5; overflow:hidden;'>"
+            f"<div style='width:{pct:.1f}%; height:100%; border-radius:999px; background:#9B8BC8;'></div>"
+            "</div>"
+            f"<div style='text-align:right; font-weight:700; color:#666;'>{int(round(pct))}%</div>"
+            "</div>"
+        )
+    return f"<div style='margin-top:8px;'>{bars}</div>"
+
+
+def _gauge_html(
+    percent: int,
+    directories_found: int | None = None,
+    directories_total: int = 36,
+    rating_distribution: list[dict] | None = None,
+) -> str:
     pct = max(0, min(100, int(percent)))
     theta_deg = 180 - (pct * 1.8)
     theta = math.radians(theta_deg)
@@ -186,7 +228,10 @@ def _gauge_html(percent: int, directories_found: int | None = None, directories_
         f"<div style='{heading_style}'>Lokale Verzeichnisse</div>"
         f"{directories_value}"
         "</div>"
-        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'></div>"
+        "<div style='border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;'>"
+        f"<div style='{heading_style}'>Nach Bewertung</div>"
+        f"{_rating_distribution_html(rating_distribution)}"
+        "</div>"
         "</div>"
     )
 
@@ -454,6 +499,7 @@ def build_local_seo_fdm_block(
         "average_rating": None,
         "number_of_reviews": None,
         "review_response_rate_pct": None,
+        "rating_distribution": [],
     }
     directories_found_count = None
     directories_total = 36
@@ -611,6 +657,7 @@ def build_local_seo_fdm_block(
             profile_completeness,
             directories_found=directories_found_count,
             directories_total=directories_total,
+            rating_distribution=uberall_feedback.get("rating_distribution"),
         )
         pre_html += f"<div style='margin-top:8px; color:#666; font-size:12px;'>Quelle: {source_label}</div>"
 
