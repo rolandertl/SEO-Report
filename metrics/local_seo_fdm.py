@@ -1,6 +1,6 @@
 import math
 import pandas as pd
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from core.context import ReportContext
 from core.config import UBERALL_LIVE_MODE, GOOGLE_PLACES_LIVE_MODE, CI_COLORS
@@ -193,25 +193,27 @@ def _gauge_html(percent: int, directories_found: int | None = None, directories_
 
 def _star_rating_html(rating: float, review_count: int) -> str:
     r = max(0.0, min(5.0, float(rating)))
-    uid = f"stars_{int(round(r * 100))}_{int(review_count)}"
     star_path = "M12 1.8l3.15 6.39 7.05 1.03-5.1 4.97 1.2 7.01L12 17.9l-6.3 3.3 1.2-7.01-5.1-4.97 7.05-1.03L12 1.8z"
+
+    def star_img(fill: float) -> str:
+        clip_w = 24.0 * max(0.0, min(1.0, fill))
+        svg = f"""
+<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+  <defs>
+    <clipPath id="clip">
+      <rect x="0" y="0" width="{clip_w:.2f}" height="24" />
+    </clipPath>
+  </defs>
+  <path d="{star_path}" fill="none" stroke="#E0A100" stroke-width="1.4"/>
+  <path d="{star_path}" fill="#F5B301" clip-path="url(#clip)"/>
+</svg>
+""".strip()
+        return f"<img src='data:image/svg+xml;utf8,{quote(svg)}' alt='' style='width:26px; height:26px; display:block;'/>"
+
     stars = []
     for i in range(5):
         fill = max(0.0, min(1.0, r - i))
-        clip_w = 24.0 * fill
-        stars.append(
-            f"""
-            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
-              <defs>
-                <clipPath id="{uid}_{i}">
-                  <rect x="0" y="0" width="{clip_w:.2f}" height="24"></rect>
-                </clipPath>
-              </defs>
-              <path d="{star_path}" fill="none" stroke="#E0A100" stroke-width="1.4"></path>
-              <path d="{star_path}" fill="#F5B301" clip-path="url(#{uid}_{i})"></path>
-            </svg>
-            """
-        )
+        stars.append(star_img(fill))
     stars_html = "".join(stars)
     return f"""
 <div style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;">
