@@ -292,6 +292,46 @@ def _dual_donut(tlds: pd.DataFrame, countries: pd.DataFrame):
     return fig
 
 
+def _dual_donut_pdf(tlds: pd.DataFrame, countries: pd.DataFrame):
+    colors = [CI_COLORS["COLOR_1"], CI_COLORS["COLOR_2"], CI_COLORS["COLOR_3"], CI_COLORS["COLOR_5"], CI_COLORS["COLOR_4"], CI_COLORS["COLOR_6"]]
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Pie(
+            labels=tlds["label"].tolist(),
+            values=tlds["value"].tolist(),
+            hole=0.62,
+            marker=dict(colors=colors[: len(tlds)]),
+            textinfo="percent",
+            showlegend=False,
+            domain=dict(x=[0.20, 0.80], y=[0.54, 0.98]),
+        )
+    )
+    fig.add_trace(
+        go.Pie(
+            labels=[str(x).upper() for x in countries["label"].tolist()],
+            values=countries["value"].tolist(),
+            hole=0.62,
+            marker=dict(colors=colors[: len(countries)]),
+            textinfo="percent",
+            showlegend=False,
+            domain=dict(x=[0.20, 0.80], y=[0.02, 0.46]),
+        )
+    )
+
+    fig.update_layout(
+        height=620,
+        margin=dict(l=30, r=30, t=70, b=10),
+        showlegend=False,
+        paper_bgcolor="white",
+        annotations=[
+            dict(text="TLDs", x=0.50, y=1.02, xref="paper", yref="paper", showarrow=False, font=dict(size=24)),
+            dict(text="Länder", x=0.50, y=0.50, xref="paper", yref="paper", showarrow=False, font=dict(size=24)),
+        ],
+    )
+    return fig
+
+
 def _legend_html(title: str, df: pd.DataFrame, uppercase_labels: bool = False) -> str:
     colors = [
         CI_COLORS["COLOR_1"],
@@ -354,13 +394,21 @@ def build_backlinks_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
                     + _legend_html("Länder", countries, uppercase_labels=True)
                     + "</div>"
                 )
+                pdf_post_html = (
+                    "<div style='display:grid; grid-template-columns:1fr; gap:14px; margin-top:10px;'>"
+                    + _legend_html("TLDs", tlds, uppercase_labels=False)
+                    + _legend_html("Länder", countries, uppercase_labels=True)
+                    + "</div>"
+                )
                 return {
                     "id": "backlinks",
                     "title": "Backlink-Übersicht",
                     "accent_token": "COLOR_5",
                     "pre_html": pre_html,
                     "fig": fig,
+                    "pdf_fig": _dual_donut_pdf(tlds=tlds, countries=countries),
                     "post_html": post_html,
+                    "pdf_post_html": pdf_post_html,
                     "comment_title": "Einordnung",
                     "comment": "Für diese Domain sind aktuell keine belastbaren Backlink-Daten in SISTRIX verfügbar.",
                     "kpis": {
@@ -472,6 +520,12 @@ def build_backlinks_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
         + _legend_html("Länder", countries, uppercase_labels=True)
         + "</div>"
     )
+    pdf_post_html = (
+        "<div style='display:grid; grid-template-columns:1fr; gap:14px; margin-top:10px;'>"
+        + _legend_html("TLDs", tlds, uppercase_labels=False)
+        + _legend_html("Länder", countries, uppercase_labels=True)
+        + "</div>"
+    )
 
     comment = (
         "Die Linkstruktur zeigt die aktuelle Offpage-Basis der Domain. "
@@ -485,7 +539,9 @@ def build_backlinks_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
         "accent_token": "COLOR_5",
         "pre_html": pre_html,
         "fig": fig,
+        "pdf_fig": _dual_donut_pdf(tlds=tlds, countries=countries),
         "post_html": post_html,
+        "pdf_post_html": pdf_post_html,
         "comment_title": "Einordnung",
         "comment": comment,
         "kpis": {

@@ -303,7 +303,12 @@ def _mobile_audit_html(mobile_data: dict | None) -> str:
         "wie gut Ihre Website auf Smartphones technisch und visuell funktioniert."
         "</div>"
         "<div style='display:grid; grid-template-columns:260px 1fr; gap:26px; align-items:start; margin-top:14px;'>"
-        f"<div style=\"margin:0 auto; width:220px; padding:28px 0; display:flex; align-items:center; justify-content:center; background:url('{phone_bg}') center center / contain no-repeat;\">{screenshot_html}</div>"
+        "<div style='margin:0 auto; width:220px;'>"
+        "<div style='position:relative; width:220px; height:420px;'>"
+        f"<div style='position:absolute; left:7px; top:28px; width:206px; height:364px; z-index:1; overflow:hidden; border-radius:18px;'>{screenshot_html}</div>"
+        f"<img src='{phone_bg}' alt='Smartphone-Mockup' style='position:absolute; inset:0; width:220px; height:420px; display:block; z-index:2;'/>"
+        "</div>"
+        "</div>"
         f"<div>{checks_html}</div>"
         "</div>"
         "</div>"
@@ -398,7 +403,7 @@ def _technical_quick_check_html(insites_report: dict | None) -> str:
     )
 
     return (
-        "<div style='margin-top:22px;'>"
+        "<div style='margin-top:34px;'>"
         "<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>Technischer Quick-Check</div>"
         "<div style='font-size:14px; line-height:1.6; margin-top:8px;'>"
         "Ein kompakter Blick auf zentrale technische Grundlagen Ihrer Website."
