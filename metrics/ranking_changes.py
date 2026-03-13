@@ -92,7 +92,9 @@ def build_newcomers_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
             intro,
             ["Keyword", "Pos. aktuell", "URL"],
             rows,
-            "",
+            "Diese neu hinzugewonnenen Rankings zeigen, dass Ihre Website für zusätzliche Suchanfragen bei Google "
+            "sichtbar geworden ist. Das ist ein positives Signal für den Ausbau Ihrer thematischen Reichweite und "
+            "ein Hinweis darauf, dass sich Inhalte und Optimierungen Schritt für Schritt in neuen Suchfeldern etablieren.",
         )
 
     try:
@@ -127,7 +129,9 @@ def build_newcomers_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
         intro,
         ["Keyword", "Pos. aktuell", "URL"],
         rows,
-        "",
+        "Diese neu hinzugewonnenen Rankings zeigen, dass Ihre Website für zusätzliche Suchanfragen bei Google "
+        "sichtbar geworden ist. Das ist ein positives Signal für den Ausbau Ihrer thematischen Reichweite und "
+        "ein Hinweis darauf, dass sich Inhalte und Optimierungen Schritt für Schritt in neuen Suchfeldern etablieren.",
     )
 
 

@@ -138,6 +138,12 @@ def build_interesting_rankings_block(ctx: ReportContext, sistrix_api_key: str, o
             "accent_token": "COLOR_4",
             "pre_html": pre_html,
             "fig": fig,
+            "comment_title": "Einordnung",
+            "comment": (
+                "Diese Auswahl zeigt, bei welchen Suchanfragen Ihre Website bereits besonders gut sichtbar ist "
+                "oder ein starkes Nachfragepotenzial besitzt. Damit erkennen wir schnell, welche Themen heute "
+                "schon tragen und in welchen Bereichen sich gezielte weitere Optimierungen besonders lohnen."
+            ),
         }
 
     except Exception as e:
