@@ -641,8 +641,9 @@ def build_local_seo_fdm_block(
         + "<div style='font-size:14px; line-height:1.6; margin-top:10px;'>"
         "Ebenso entscheidend ist der professionelle Umgang mit Feedback. Zeitnahe und wertschätzende Antworten auf Bewertungen – insbesondere auf kritische Rückmeldungen – zeigen Kundennähe, Engagement und Serviceorientierung. Unternehmen, die aktiv reagieren, hinterlassen nicht nur einen besseren Eindruck, sondern stärken langfristig ihre Reputation und Kundenbindung."
         "</div>"
-        + (_mobile_audit_html(insites_mobile_data) if insites_mobile_data else "")
         + (_technical_quick_check_html(insites_report) if insites_report else "")
+        + ("<div class='pdf-page-break'></div>" if insites_mobile_data else "")
+        + (_mobile_audit_html(insites_mobile_data) if insites_mobile_data else "")
     )
 
     return {

@@ -124,6 +124,20 @@ h2 {
     line-height: 1.8;
 }
 
+.pdf-page-break {
+    display: none;
+}
+
+@media print {
+  .pdf-page-break {
+    display: block;
+    height: 0;
+    margin: 0;
+    page-break-before: always;
+    break-before: page;
+  }
+}
+
 .cover-page {
     min-height: 247mm;
     display: flex;
@@ -200,8 +214,8 @@ h2 {
     <div class="toc-item">Neueinsteiger – Neue Rankings im Zeitraum.</div>
     <div class="toc-item">Verlierer – Rückläufige Positionen.</div>
     <div class="toc-item">Local SEO – Firmendaten Manager Auswertung.</div>
-    <div class="toc-item">Mobile Darstellung – Smartphone-Check und Nutzerfreundlichkeit.</div>
     <div class="toc-item">Technischer Quick-Check – Broken Links, SSL, Sitemap und robots.txt.</div>
+    <div class="toc-item">Mobile Darstellung – Smartphone-Check und Nutzerfreundlichkeit.</div>
     <div class="toc-item">KI-Overview – Sichtbarkeit der Marke aus KI-Perspektive.</div>
     <div class="toc-item">Backlinks – Entwicklung des Linkprofils.</div>
 
