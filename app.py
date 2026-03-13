@@ -291,7 +291,7 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("Report generieren", type="primary")
-    st.caption("Version 1.0.8")
+    st.caption("Version 1.0.9")
 
 
 domain = safe_domain(domain_raw)

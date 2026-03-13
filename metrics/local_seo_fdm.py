@@ -193,16 +193,32 @@ def _gauge_html(percent: int, directories_found: int | None = None, directories_
 
 def _star_rating_html(rating: float, review_count: int) -> str:
     r = max(0.0, min(5.0, float(rating)))
-    fill_pct = (r / 5.0) * 100.0
+    uid = f"stars_{int(round(r * 100))}_{int(review_count)}"
+    star_path = "M12 1.8l3.15 6.39 7.05 1.03-5.1 4.97 1.2 7.01L12 17.9l-6.3 3.3 1.2-7.01-5.1-4.97 7.05-1.03L12 1.8z"
+    stars = []
+    for i in range(5):
+        fill = max(0.0, min(1.0, r - i))
+        clip_w = 24.0 * fill
+        stars.append(
+            f"""
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+              <defs>
+                <clipPath id="{uid}_{i}">
+                  <rect x="0" y="0" width="{clip_w:.2f}" height="24"></rect>
+                </clipPath>
+              </defs>
+              <path d="{star_path}" fill="none" stroke="#E0A100" stroke-width="1.4"></path>
+              <path d="{star_path}" fill="#F5B301" clip-path="url(#{uid}_{i})"></path>
+            </svg>
+            """
+        )
+    stars_html = "".join(stars)
     return f"""
 <div style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px;">
   <div style="font-weight:700; margin-bottom:8px;">Google Bewertungen</div>
   <div style="font-size:46px; font-weight:800; line-height:1;">{r:.1f}</div>
-  <div style="position:relative; display:inline-block; font-size:32px; line-height:1; margin-top:6px;">
-    <span style="color:#D4D8E0;">★★★★★</span>
-    <span style="
-      position:absolute; left:0; top:0; width:{fill_pct:.1f}%; overflow:hidden; white-space:nowrap; color:#F5B301;
-    ">★★★★★</span>
+  <div style="display:flex; align-items:center; gap:2px; margin-top:8px;">
+    {stars_html}
   </div>
   <div style="margin-top:8px; color:#666;">{_fmt_int_eu(review_count)} Bewertungen</div>
 </div>
@@ -405,7 +421,7 @@ def _technical_quick_check_html(insites_report: dict | None) -> str:
     )
 
     return (
-        "<div style='margin-top:34px;'>"
+        "<div style='margin-top:56px;'>"
         "<div style='font-size:30px; font-weight:700; margin:0 0 8px 0; padding-bottom:6px; border-bottom:2px solid rgba(238,49,107,1);'>Technischer Quick-Check</div>"
         "<div style='font-size:14px; line-height:1.6; margin-top:8px;'>"
         "Ein kompakter Blick auf zentrale technische Grundlagen Ihrer Website."
