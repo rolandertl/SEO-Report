@@ -261,13 +261,12 @@ def _mobile_audit_html(mobile_data: dict | None) -> str:
     has_viewport = bool(m.get("has_viewport_optimised_for_mobile"))
     screenshot_url = str(m.get("mobile_screenshot_url") or "").strip()
 
-    phone_bg = "https://audit.edelweiss-digital.at/images/insites-brand/mobile-background.svg"
     screenshot_html = (
         f"<img src='{screenshot_url}' alt='Mobil-Screenshot' "
-        "style='width:206px; height:364px; border-radius:18px; display:block;'/>"
+        "style='width:192px; height:340px; border-radius:16px; display:block;'/>"
         if screenshot_url
         else (
-            "<div style='width:206px; height:364px; border-radius:18px; background:rgba(0,0,0,0.06); "
+            "<div style='width:192px; height:340px; border-radius:16px; background:rgba(0,0,0,0.06); "
             "display:grid; place-items:center; color:#666; text-align:center; padding:8px;'>Kein Screenshot verfügbar</div>"
         )
     )
@@ -304,9 +303,12 @@ def _mobile_audit_html(mobile_data: dict | None) -> str:
         "</div>"
         "<div style='display:grid; grid-template-columns:260px 1fr; gap:26px; align-items:start; margin-top:14px;'>"
         "<div style='margin:0 auto; width:220px;'>"
-        "<div style='position:relative; width:220px; height:420px;'>"
-        f"<div style='position:absolute; left:7px; top:28px; width:206px; height:364px; z-index:1; overflow:hidden; border-radius:18px;'>{screenshot_html}</div>"
-        f"<img src='{phone_bg}' alt='Smartphone-Mockup' style='position:absolute; inset:0; width:220px; height:420px; display:block; z-index:2;'/>"
+        "<div style='position:relative; width:220px; height:420px; background:#4B5969; border-radius:28px; box-shadow:0 8px 20px rgba(0,0,0,0.12);'>"
+        "<div style='position:absolute; top:12px; left:50%; transform:translateX(-50%); width:74px; height:8px; border-radius:999px; background:#2E3945;'></div>"
+        "<div style='position:absolute; left:14px; top:22px; width:192px; height:340px; z-index:1; overflow:hidden; border-radius:16px; background:#fff;'>"
+        f"{screenshot_html}"
+        "</div>"
+        "<div style='position:absolute; left:50%; bottom:16px; transform:translateX(-50%); width:44px; height:44px; border-radius:50%; border:2px solid rgba(255,255,255,0.7);'></div>"
         "</div>"
         "</div>"
         f"<div>{checks_html}</div>"

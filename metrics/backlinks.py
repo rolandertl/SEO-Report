@@ -332,6 +332,34 @@ def _dual_donut_pdf(tlds: pd.DataFrame, countries: pd.DataFrame):
     return fig
 
 
+def _single_donut_pdf(title: str, df: pd.DataFrame, uppercase_labels: bool = False):
+    colors = [CI_COLORS["COLOR_1"], CI_COLORS["COLOR_2"], CI_COLORS["COLOR_3"], CI_COLORS["COLOR_5"], CI_COLORS["COLOR_4"], CI_COLORS["COLOR_6"]]
+    labels = [str(x).upper() if uppercase_labels else str(x) for x in df["label"].tolist()]
+    fig = go.Figure(
+        data=[
+            go.Pie(
+                labels=labels,
+                values=df["value"].tolist(),
+                hole=0.62,
+                marker=dict(colors=colors[: len(df)]),
+                textinfo="percent",
+                showlegend=False,
+                domain=dict(x=[0.22, 0.78], y=[0.08, 0.88]),
+            )
+        ]
+    )
+    fig.update_layout(
+        height=290,
+        margin=dict(l=50, r=50, t=84, b=8),
+        showlegend=False,
+        paper_bgcolor="white",
+        annotations=[
+            dict(text=title, x=0.50, y=1.08, xref="paper", yref="paper", showarrow=False, font=dict(size=24)),
+        ],
+    )
+    return fig
+
+
 def _legend_html(title: str, df: pd.DataFrame, uppercase_labels: bool = False) -> str:
     colors = [
         CI_COLORS["COLOR_1"],
@@ -394,21 +422,25 @@ def build_backlinks_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
                     + _legend_html("Länder", countries, uppercase_labels=True)
                     + "</div>"
                 )
-                pdf_post_html = (
-                    "<div style='display:grid; grid-template-columns:1fr; gap:14px; margin-top:10px;'>"
-                    + _legend_html("TLDs", tlds, uppercase_labels=False)
-                    + _legend_html("Länder", countries, uppercase_labels=True)
-                    + "</div>"
-                )
                 return {
                     "id": "backlinks",
                     "title": "Backlink-Übersicht",
                     "accent_token": "COLOR_5",
                     "pre_html": pre_html,
                     "fig": fig,
-                    "pdf_fig": _dual_donut_pdf(tlds=tlds, countries=countries),
+                    "pdf_fig": _single_donut_pdf("TLDs", tlds, uppercase_labels=False),
+                    "pdf_mid_html": (
+                        "<div style='margin-top:8px; margin-bottom:22px;'>"
+                        + _legend_html("TLDs", tlds, uppercase_labels=False)
+                        + "</div>"
+                    ),
                     "post_html": post_html,
-                    "pdf_post_html": pdf_post_html,
+                    "pdf_post_fig": _single_donut_pdf("Länder", countries, uppercase_labels=True),
+                    "pdf_post_html": (
+                        "<div style='margin-top:8px;'>"
+                        + _legend_html("Länder", countries, uppercase_labels=True)
+                        + "</div>"
+                    ),
                     "comment_title": "Einordnung",
                     "comment": "Für diese Domain sind aktuell keine belastbaren Backlink-Daten in SISTRIX verfügbar.",
                     "kpis": {
@@ -520,13 +552,6 @@ def build_backlinks_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
         + _legend_html("Länder", countries, uppercase_labels=True)
         + "</div>"
     )
-    pdf_post_html = (
-        "<div style='display:grid; grid-template-columns:1fr; gap:14px; margin-top:10px;'>"
-        + _legend_html("TLDs", tlds, uppercase_labels=False)
-        + _legend_html("Länder", countries, uppercase_labels=True)
-        + "</div>"
-    )
-
     comment = (
         "Die Linkstruktur zeigt die aktuelle Offpage-Basis der Domain. "
         "Wichtig für die nächsten Schritte sind vor allem ein stetiger Ausbau verweisender Domains "
@@ -539,9 +564,19 @@ def build_backlinks_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
         "accent_token": "COLOR_5",
         "pre_html": pre_html,
         "fig": fig,
-        "pdf_fig": _dual_donut_pdf(tlds=tlds, countries=countries),
+        "pdf_fig": _single_donut_pdf("TLDs", tlds, uppercase_labels=False),
+        "pdf_mid_html": (
+            "<div style='margin-top:8px; margin-bottom:22px;'>"
+            + _legend_html("TLDs", tlds, uppercase_labels=False)
+            + "</div>"
+        ),
         "post_html": post_html,
-        "pdf_post_html": pdf_post_html,
+        "pdf_post_fig": _single_donut_pdf("Länder", countries, uppercase_labels=True),
+        "pdf_post_html": (
+            "<div style='margin-top:8px;'>"
+            + _legend_html("Länder", countries, uppercase_labels=True)
+            + "</div>"
+        ),
         "comment_title": "Einordnung",
         "comment": comment,
         "kpis": {
