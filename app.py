@@ -494,7 +494,7 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("Report generieren", type="primary")
-    st.caption("Version 1.0.20")
+    st.caption("Version 1.0.21")
 
 
 domain = safe_domain(domain_raw)
@@ -612,30 +612,54 @@ if blocks:
   border-bottom: 2px solid #EE316B;
   line-height: 1.2;
 }
-input[type="checkbox"] {
-  accent-color: #2DBE8D !important;
+.pdf-switch-wrap {
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  margin-top:8px;
 }
-.stToggle [role="switch"][aria-checked="true"] {
-  background-color: #2DBE8D !important;
-  border-color: #2DBE8D !important;
+.pdf-switch-wrap div[data-testid="stCheckbox"] {
+  margin: 0 !important;
 }
-.stToggle [role="switch"][aria-checked="false"] {
-  background-color: #C9CED6 !important;
-  border-color: #C9CED6 !important;
+.pdf-switch-wrap div[data-testid="stCheckbox"] > label {
+  display:flex !important;
+  justify-content:flex-end;
+  align-items:center;
+  min-height:auto !important;
+  padding:0 !important;
+  cursor:pointer;
+  position:relative;
 }
-.stToggle div[data-baseweb="checkbox"]:has(input:checked) > label > div:first-child,
-.stToggle label[data-baseweb="checkbox"]:has(input:checked) > div:first-child,
-.stToggle div[data-baseweb="switch"]:has(input:checked) > label > div:first-child,
-.stToggle label[data-baseweb="switch"]:has(input:checked) > div:first-child {
-  background-color: #2DBE8D !important;
-  border-color: #2DBE8D !important;
+.pdf-switch-wrap div[data-testid="stCheckbox"] > label > div:first-child,
+.pdf-switch-wrap div[data-testid="stCheckbox"] > label > div:nth-child(2) {
+  display:none !important;
 }
-.stToggle div[data-baseweb="checkbox"]:has(input:not(:checked)) > label > div:first-child,
-.stToggle label[data-baseweb="checkbox"]:has(input:not(:checked)) > div:first-child,
-.stToggle div[data-baseweb="switch"]:has(input:not(:checked)) > label > div:first-child,
-.stToggle label[data-baseweb="switch"]:has(input:not(:checked)) > div:first-child {
-  background-color: #C9CED6 !important;
-  border-color: #C9CED6 !important;
+.pdf-switch-wrap div[data-testid="stCheckbox"] > label::before {
+  content:"";
+  width:44px;
+  height:24px;
+  border-radius:999px;
+  background:#C9CED6;
+  display:block;
+  transition:all .18s ease;
+}
+.pdf-switch-wrap div[data-testid="stCheckbox"] > label::after {
+  content:"";
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
+  transition:all .18s ease;
+}
+.pdf-switch-wrap div[data-testid="stCheckbox"]:has(input:checked) > label::before {
+  background:#2DBE8D !important;
+}
+.pdf-switch-wrap div[data-testid="stCheckbox"]:has(input:checked) > label::after {
+  left:23px;
 }
 </style>
 """,
@@ -650,7 +674,9 @@ input[type="checkbox"] {
                 unsafe_allow_html=True,
             )
         with c2:
-            st.toggle("PDF", value=pdf_section_visible(section_id), key=pdf_toggle_key(section_id), label_visibility="collapsed")
+            st.markdown("<div class='pdf-switch-wrap'>", unsafe_allow_html=True)
+            st.checkbox("PDF", value=pdf_section_visible(section_id), key=pdf_toggle_key(section_id), label_visibility="collapsed")
+            st.markdown("</div>", unsafe_allow_html=True)
 
     for b in blocks:
         if not isinstance(b, dict):
