@@ -110,6 +110,14 @@ def _find_location_by_domain(domain: str, uberall_api_key: str, max_per_page: in
 
 
 def _rating_distribution_html(distribution: list[dict] | None) -> str:
+    star_path = "M12 1.8l3.15 6.39 7.05 1.03-5.1 4.97 1.2 7.01L12 17.9l-6.3 3.3 1.2-7.01-5.1-4.97 7.05-1.03L12 1.8z"
+    star_svg = (
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\">"
+        f"<path d=\"{star_path}\" fill=\"#F5B301\" stroke=\"#E0A100\" stroke-width=\"1.4\"/>"
+        "</svg>"
+    )
+    star_img = f"<img src='data:image/svg+xml;utf8,{quote(star_svg)}' alt='' style='width:18px; height:18px; display:block;'/>"
+
     rows = distribution or []
     counts_by_rating: dict[int, int] = {i: 0 for i in range(1, 6)}
     total = 0
@@ -135,10 +143,12 @@ def _rating_distribution_html(distribution: list[dict] | None) -> str:
         count = counts_by_rating.get(rating, 0)
         pct = (count / total) * 100.0 if total else 0.0
         bars += (
-            "<div style='display:grid; grid-template-columns:28px 1fr 42px; gap:10px; align-items:center; margin:8px 0;'>"
-            f"<div style='font-weight:700; color:#666;'>{rating} <span style='color:#EEDC24;'>★</span></div>"
+            "<div style='display:grid; grid-template-columns:40px 1fr 42px; gap:10px; align-items:center; margin:8px 0;'>"
+            "<div style='font-weight:700; color:#666; display:flex; align-items:center; gap:2px;'>"
+            f"<span>{rating}</span>{star_img}"
+            "</div>"
             "<div style='height:12px; border-radius:999px; background:#EEF1F5; overflow:hidden;'>"
-            f"<div style='width:{pct:.1f}%; height:100%; border-radius:999px; background:#EEDC24;'></div>"
+            f"<div style='width:{pct:.1f}%; height:100%; border-radius:999px; background:#F5B301;'></div>"
             "</div>"
             f"<div style='text-align:right; font-weight:700; color:#666;'>{int(round(pct))}%</div>"
             "</div>"
