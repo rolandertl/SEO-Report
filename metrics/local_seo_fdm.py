@@ -145,7 +145,7 @@ def _gauge_html(percent: int, directories_found: int | None = None, directories_
         f"<path d='{p}' stroke='{c}' stroke-width='16' fill='none' stroke-linecap='round'/>"
         for p, c in seg_paths
     )
-    if directories_found is not None:
+    if directories_found is not None and directories_total > 0:
         directories_value = (
             "<div style='margin-top:10px; font-size:44px; font-weight:800; line-height:1;'>"
             f"{_fmt_int_eu(directories_found)}"
