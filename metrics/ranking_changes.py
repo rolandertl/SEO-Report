@@ -4,6 +4,7 @@ from datetime import date
 from core.context import ReportContext
 from core.config import DEV_MODE, SISTRIX_RANKING_BLOCKS_LIVE
 from services.sistrix_keyword_domain import fetch_keyword_domain_snapshot
+from services.llm import generate_comment_cached
 from components.charts import table_chart
 
 
@@ -41,6 +42,50 @@ def _short_url(u: str) -> str:
     # Domain entfernen, wenn vorhanden
     parts = u.split("/", 1)
     return "/" + parts[1] if len(parts) > 1 else "/"
+
+
+def _newcomers_fallback(rows: list[list[str]]) -> str:
+    top_keywords = ", ".join(row[0] for row in rows[:3] if row and row[0])
+    if not top_keywords:
+        return (
+            "Diese neu hinzugewonnenen Rankings zeigen, dass Ihre Website für zusätzliche Suchanfragen bei Google "
+            "sichtbar geworden ist. Das ist ein positives Signal für den Ausbau Ihrer thematischen Reichweite und "
+            "ein Hinweis darauf, dass sich Inhalte und Optimierungen Schritt für Schritt in neuen Suchfeldern etablieren."
+        )
+    return (
+        f"Neu hinzugekommen sind unter anderem Rankings für {top_keywords}. "
+        "Das zeigt, dass Ihre Website in zusätzlichen Themenfeldern Sichtbarkeit aufbaut und Schritt für Schritt "
+        "für weitere relevante Suchanfragen bei Google erscheint."
+    )
+
+
+def _newcomers_ai_comment(ctx: ReportContext, newcomers: pd.DataFrame, rows: list[list[str]], api_key: str) -> str:
+    fallback = _newcomers_fallback(rows)
+    if newcomers.empty:
+        return fallback
+
+    top_rows = []
+    for _, row in newcomers.head(5).iterrows():
+        top_rows.append(
+            {
+                "keyword": str(row.get("kw", "")),
+                "position": int(round(float(row.get("pos", 0)))),
+                "url": _short_url(str(row.get("url", ""))),
+                "traffic": round(float(row.get("traffic", 0.0) or 0.0), 2),
+            }
+        )
+
+    facts = {
+        "domain": ctx.domain,
+        "date_range": {"start": _fmt_eu(ctx.start_date), "end": _fmt_eu(ctx.end_date)},
+        "keywords_focus": "newcomers_rankings",
+        "top_keywords": top_rows,
+        "instruction": (
+            "Beziehe dich konkret auf die wichtigsten neu hinzugekommenen Rankings. "
+            "Schreibe 2 bis 3 Sätze für einen Kundenreport, ohne Bulletpoints, ohne Übertreibung."
+        ),
+    }
+    return generate_comment_cached(api_key, "Neu hinzugewonnene Google-Rankings", facts, fallback=fallback)
 
 
 def _block(
@@ -92,9 +137,7 @@ def build_newcomers_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
             intro,
             ["Keyword", "Pos. aktuell", "URL"],
             rows,
-            "Diese neu hinzugewonnenen Rankings zeigen, dass Ihre Website für zusätzliche Suchanfragen bei Google "
-            "sichtbar geworden ist. Das ist ein positives Signal für den Ausbau Ihrer thematischen Reichweite und "
-            "ein Hinweis darauf, dass sich Inhalte und Optimierungen Schritt für Schritt in neuen Suchfeldern etablieren.",
+            _newcomers_ai_comment(ctx, pd.DataFrame(fake).rename(columns={"position": "pos"}), rows, openai_api_key),
         )
 
     try:
@@ -129,9 +172,7 @@ def build_newcomers_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
         intro,
         ["Keyword", "Pos. aktuell", "URL"],
         rows,
-        "Diese neu hinzugewonnenen Rankings zeigen, dass Ihre Website für zusätzliche Suchanfragen bei Google "
-        "sichtbar geworden ist. Das ist ein positives Signal für den Ausbau Ihrer thematischen Reichweite und "
-        "ein Hinweis darauf, dass sich Inhalte und Optimierungen Schritt für Schritt in neuen Suchfeldern etablieren.",
+        _newcomers_ai_comment(ctx, newcomers, rows, openai_api_key),
     )
 
 

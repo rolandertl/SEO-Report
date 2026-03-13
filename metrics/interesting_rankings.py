@@ -4,7 +4,7 @@ import pandas as pd
 from core.context import ReportContext
 from core.config import DEV_MODE, SISTRIX_RANKING_BLOCKS_LIVE
 from services.sistrix_keyword_domain import fetch_keyword_domain_snapshot
-from services.llm import generate_comment
+from services.llm import generate_comment_cached
 from components.charts import table_chart
 
 
@@ -92,6 +92,7 @@ def _ai_comment(df: pd.DataFrame, api_key: str) -> str:
     if df.empty:
         return _fallback_comment(df)
 
+    fallback = _fallback_comment(df)
     top_rows = []
     for _, row in df.head(5).iterrows():
         top_rows.append(
@@ -105,7 +106,7 @@ def _ai_comment(df: pd.DataFrame, api_key: str) -> str:
         )
 
     facts = {
-        "domain": str(df.iloc[0].get("url", "")) if not df.empty else "",
+        "keywords_focus": "interesting_rankings",
         "top_keywords": top_rows,
         "instruction": (
             "Beziehe dich konkret auf die wichtigsten Keywords und ihre Bedeutung. "
@@ -113,11 +114,7 @@ def _ai_comment(df: pd.DataFrame, api_key: str) -> str:
         ),
     }
 
-    try:
-        text = generate_comment(api_key, "Interessante Rankings", facts)
-        return text or _fallback_comment(df)
-    except Exception:
-        return _fallback_comment(df)
+    return generate_comment_cached(api_key, "Interessante Rankings", facts, fallback=fallback)
 
 
 def build_interesting_rankings_block(ctx: ReportContext, sistrix_api_key: str, openai_api_key: str) -> dict:

@@ -1,4 +1,31 @@
+import hashlib
+import json
+from pathlib import Path
+
 from core.config import DEV_MODE
+
+
+CACHE_DIR = Path(".cache")
+CACHE_FILE = CACHE_DIR / "llm_comments.json"
+
+
+def _stable_key(title: str, facts: dict) -> str:
+    payload = json.dumps({"title": title, "facts": facts}, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _read_cache() -> dict:
+    try:
+        if CACHE_FILE.exists():
+            return json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+
+def _write_cache(data: dict) -> None:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    CACHE_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def generate_comment(api_key: str, title: str, facts: dict) -> str:
@@ -31,3 +58,26 @@ def generate_comment(api_key: str, title: str, facts: dict) -> str:
     )
 
     return resp.choices[0].message.content.strip()
+
+
+def generate_comment_cached(api_key: str, title: str, facts: dict, fallback: str = "") -> str:
+    key = _stable_key(title, facts)
+    cache = _read_cache()
+    cached = cache.get(key)
+    if isinstance(cached, str) and cached.strip():
+        return cached.strip()
+
+    try:
+        text = generate_comment(api_key, title, facts).strip()
+    except Exception:
+        return fallback
+
+    if not text:
+        return fallback
+
+    cache[key] = text
+    try:
+        _write_cache(cache)
+    except Exception:
+        pass
+    return text
