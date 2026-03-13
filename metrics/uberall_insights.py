@@ -1,4 +1,5 @@
 import pandas as pd
+from datetime import date
 
 from core.context import ReportContext
 from core.config import UBERALL_LIVE_MODE, CI_COLORS
@@ -213,9 +214,12 @@ def _normalize_response_rate(v) -> int | None:
 
 
 def _fetch_customer_feedback(ctx: ReportContext, loc_id: str, uberall_api_key: str) -> dict:
+    # Bewertungen und Antwortrate sollen als Gesamtwert angezeigt werden,
+    # unabhängig vom SEO-Report-Zeitraum.
+    _ = ctx
     base_params = {
-        "startDate": ctx.start_date.isoformat(),
-        "endDate": ctx.end_date.isoformat(),
+        "startDate": "2000-01-01",
+        "endDate": date.today().isoformat(),
     }
 
     # 1) Primär: customer-feedback (enthält repliedCount/ratingCount für Antwortrate)

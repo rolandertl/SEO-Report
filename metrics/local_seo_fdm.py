@@ -545,7 +545,7 @@ def build_local_seo_fdm_block(
     ):
         rating = float(uberall_feedback["average_rating"])
         review_count = int(uberall_feedback["number_of_reviews"])
-        review_source = "Firmendaten Manager – customer-feedback-by-period"
+        review_source = "Firmendaten Manager – customer-feedback (Gesamtwerte)"
     elif GOOGLE_PLACES_LIVE_MODE and google_places_api_key and name and street:
         try:
             rating, review_count = fetch_rating_and_review_count(
