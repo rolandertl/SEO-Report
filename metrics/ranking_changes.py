@@ -88,6 +88,53 @@ def _newcomers_ai_comment(ctx: ReportContext, newcomers: pd.DataFrame, rows: lis
     return generate_comment_cached(api_key, "Neu hinzugewonnene Google-Rankings", facts, fallback=fallback)
 
 
+def _winners_fallback(rows: list[list[str]]) -> str:
+    top_keywords = ", ".join(row[0] for row in rows[:3] if row and row[0])
+    if not top_keywords:
+        return (
+            "Die positiven Positionsveränderungen unterstreichen die insgesamt gute Entwicklungsrichtung. "
+            "Sie zeigen, in welchen Themenbereichen Ihre Website aktuell an Stärke gewinnt und weiter an "
+            "Relevanz aufbaut. Diese Dynamik ist eine wichtige Grundlage, um erreichte Verbesserungen zu "
+            "stabilisieren und weitere Potenziale Schritt für Schritt zu erschließen."
+        )
+    return (
+        f"Besonders positiv entwickeln sich aktuell Rankings für {top_keywords}. "
+        "Das zeigt, in welchen Themenbereichen Ihre Website spürbar an Sichtbarkeit gewinnt und sich bei "
+        "wichtigen Suchanfragen weiter nach vorne arbeitet."
+    )
+
+
+def _winners_ai_comment(ctx: ReportContext, winners: pd.DataFrame, rows: list[list[str]], api_key: str) -> str:
+    fallback = _winners_fallback(rows)
+    if winners.empty:
+        return fallback
+
+    top_rows = []
+    for _, row in winners.head(5).iterrows():
+        top_rows.append(
+            {
+                "keyword": str(row.get("kw", "")),
+                "position_before": int(round(float(row.get("pos_start", 0)))),
+                "position_now": int(round(float(row.get("pos_end", 0)))),
+                "delta": int(round(float(row.get("delta", 0)))),
+                "url": _short_url(str(row.get("url_end", ""))),
+                "traffic": round(float(row.get("traffic_end", 0.0) or 0.0), 2),
+            }
+        )
+
+    facts = {
+        "domain": ctx.domain,
+        "date_range": {"start": _fmt_eu(ctx.start_date), "end": _fmt_eu(ctx.end_date)},
+        "keywords_focus": "winners_rankings",
+        "top_keywords": top_rows,
+        "instruction": (
+            "Beziehe dich konkret auf die wichtigsten Ranking-Gewinner und ihre Entwicklung. "
+            "Schreibe 2 bis 3 Sätze für einen Kundenreport, ohne Bulletpoints, ohne Übertreibung."
+        ),
+    }
+    return generate_comment_cached(api_key, "Ranking-Gewinner", facts, fallback=fallback)
+
+
 def _block(
     title: str,
     accent_token: str,
@@ -119,11 +166,12 @@ def build_newcomers_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
     use_fake = DEV_MODE and not SISTRIX_RANKING_BLOCKS_LIVE
 
     if use_fake:
-        rows = [
-            ["lipödem wien", "12", "/behandlung-lipoedem"],
-            ["lipödem arzt", "8", "/"],
-            ["lipödem therapie", "19", "/lipo-lexikon"],
+        fake = [
+            {"kw": "lipödem wien", "pos": 12, "url": "/behandlung-lipoedem", "traffic": 1.3},
+            {"kw": "lipödem arzt", "pos": 8, "url": "/", "traffic": 1.1},
+            {"kw": "lipödem therapie", "pos": 19, "url": "/lipo-lexikon", "traffic": 0.8},
         ]
+        rows = [[r["kw"], str(r["pos"]), r["url"]] for r in fake]
         intro = (
             "<div style='font-size:14px; line-height:1.6; margin-top:6px;'>"
             "Hier sehen Sie Suchbegriffe, für die Ihre Website im gewählten Zeitraum neu in den Google-Suchergebnissen erscheint. "
@@ -137,7 +185,7 @@ def build_newcomers_block(ctx: ReportContext, sistrix_api_key: str, openai_api_k
             intro,
             ["Keyword", "Pos. aktuell", "URL"],
             rows,
-            _newcomers_ai_comment(ctx, pd.DataFrame(fake).rename(columns={"position": "pos"}), rows, openai_api_key),
+            _newcomers_ai_comment(ctx, pd.DataFrame(fake), rows, openai_api_key),
         )
 
     try:
@@ -199,10 +247,17 @@ def build_winners_block(ctx: ReportContext, sistrix_api_key: str, openai_api_key
             intro,
             ["Keyword", "Pos. vorher", "Pos. aktuell", "Δ", "URL"],
             rows,
-            "Die positiven Positionsveränderungen unterstreichen die insgesamt gute Entwicklungsrichtung. "
-            "Sie zeigen, in welchen Themenbereichen Ihre Website aktuell an Stärke gewinnt und weiter an "
-            "Relevanz aufbaut. Diese Dynamik ist eine wichtige Grundlage, um erreichte Verbesserungen zu "
-            "stabilisieren und weitere Potenziale Schritt für Schritt zu erschließen.",
+            _winners_ai_comment(
+                ctx,
+                pd.DataFrame(
+                    [
+                        {"kw": "lipödem behandlung", "pos_start": 9, "pos_end": 3, "delta": 6, "url_end": "/behandlung-lipoedem", "traffic_end": 1.3},
+                        {"kw": "lipödem symptome", "pos_start": 14, "pos_end": 7, "delta": 7, "url_end": "/lipo-lexikon", "traffic_end": 0.9},
+                    ]
+                ),
+                rows,
+                openai_api_key,
+            ),
         )
 
     try:
@@ -249,10 +304,7 @@ def build_winners_block(ctx: ReportContext, sistrix_api_key: str, openai_api_key
         intro,
         ["Keyword", "Pos. vorher", "Pos. aktuell", "Δ", "URL"],
         rows,
-        "Die positiven Positionsveränderungen unterstreichen die insgesamt gute Entwicklungsrichtung. "
-        "Sie zeigen, in welchen Themenbereichen Ihre Website aktuell an Stärke gewinnt und weiter an "
-        "Relevanz aufbaut. Diese Dynamik ist eine wichtige Grundlage, um erreichte Verbesserungen zu "
-        "stabilisieren und weitere Potenziale Schritt für Schritt zu erschließen.",
+        _winners_ai_comment(ctx, winners, rows, openai_api_key),
     )
 
 
