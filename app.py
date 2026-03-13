@@ -164,6 +164,7 @@ def render_loading_card(line: str) -> str:
 
 
 def render_report_html(domain: str, start_date: date, end_date: date, blocks: list[dict]) -> str:
+    blocks = normalize_blocks(blocks)
     env = Environment(loader=FileSystemLoader("templates"))
     tpl = env.get_template("report.html")
     logo_data_uri = ""
@@ -282,9 +283,60 @@ def toc_description(block_id: str, title: str) -> str:
     return title_map.get(title, "")
 
 
+def normalize_blocks(blocks: list[dict] | None) -> list[dict]:
+    normalized: list[dict] = []
+    for b in blocks or []:
+        if not isinstance(b, dict):
+            continue
+        if b.get("id") != "local_seo_fdm":
+            normalized.append(b)
+            continue
+
+        normalized.extend(
+            [
+                {
+                    "id": "local_seo_summary",
+                    "title": "Local SEO – Auswertung Ihres Unternehmensprofils",
+                    "accent_token": b.get("accent_token", "COLOR_2"),
+                    "pre_html": (b.get("pdf_intro_html") or "") + (b.get("pdf_summary_html") or ""),
+                },
+                {
+                    "id": "google_presence",
+                    "title": "Google Präsenz",
+                    "accent_token": b.get("accent_token", "COLOR_2"),
+                    "pre_html": b.get("pdf_google_presence_html")
+                    or "<div style='font-size:14px; line-height:1.6; color:#666;'>Diese Auswertung setzt ein passendes Firmendaten-Manager-Unternehmensprofil voraus.</div>",
+                    "fig": b.get("fig"),
+                    "post_fig": b.get("post_fig"),
+                },
+                {
+                    "id": "google_reviews",
+                    "title": "Google Bewertungen",
+                    "accent_token": b.get("accent_token", "COLOR_2"),
+                    "pre_html": b.get("pdf_reviews_html") or "",
+                },
+                {
+                    "id": "technical_quick_check",
+                    "title": "Technischer Quick-Check",
+                    "accent_token": b.get("accent_token", "COLOR_2"),
+                    "pre_html": b.get("pdf_technical_html")
+                    or "<div style='font-size:14px; line-height:1.6; color:#666;'>Für diesen Abschnitt liegen aktuell keine Daten vor.</div>",
+                },
+                {
+                    "id": "mobile_display",
+                    "title": "Mobile Darstellung",
+                    "accent_token": b.get("accent_token", "COLOR_2"),
+                    "pre_html": b.get("pdf_mobile_html")
+                    or "<div style='font-size:14px; line-height:1.6; color:#666;'>Für diesen Abschnitt liegen aktuell keine Daten vor.</div>",
+                },
+            ]
+        )
+    return normalized
+
+
 def build_pdf_blocks(blocks: list[dict]) -> list[dict]:
     return [
-        b for b in blocks
+        b for b in normalize_blocks(blocks)
         if isinstance(b, dict) and pdf_section_visible(b.get("id", ""))
     ]
 
@@ -368,7 +420,7 @@ with st.sidebar:
 
     st.markdown("---")
     run = st.button("Report generieren", type="primary")
-    st.caption("Version 1.0.17")
+    st.caption("Version 1.0.18")
 
 
 domain = safe_domain(domain_raw)
@@ -459,7 +511,7 @@ if run:
         st.session_state["comment_overrides"] = {}
 
 # --- REPORT PREVIEW OUTSIDE RUN BEGIN ---
-blocks = st.session_state.get("blocks")
+blocks = normalize_blocks(st.session_state.get("blocks"))
 report_domain = st.session_state.get("report_domain")
 report_start_date = st.session_state.get("report_start_date")
 report_end_date = st.session_state.get("report_end_date")
@@ -489,25 +541,17 @@ if blocks:
 input[type="checkbox"] {
   accent-color: #2DBE8D !important;
 }
-label[data-baseweb="checkbox"] input:checked + div,
-label[data-baseweb="checkbox"] input:checked ~ div,
-div[data-baseweb="checkbox"] input:checked + div,
-div[data-baseweb="checkbox"] input:checked ~ div,
-label[data-baseweb="switch"] input:checked + div,
-label[data-baseweb="switch"] input:checked ~ div,
-div[data-baseweb="switch"] input:checked + div,
-div[data-baseweb="switch"] input:checked ~ div {
+.stToggle div[data-baseweb="checkbox"]:has(input:checked) > label > div:first-child,
+.stToggle label[data-baseweb="checkbox"]:has(input:checked) > div:first-child,
+.stToggle div[data-baseweb="switch"]:has(input:checked) > label > div:first-child,
+.stToggle label[data-baseweb="switch"]:has(input:checked) > div:first-child {
   background-color: #2DBE8D !important;
   border-color: #2DBE8D !important;
 }
-label[data-baseweb="checkbox"] input:not(:checked) + div,
-label[data-baseweb="checkbox"] input:not(:checked) ~ div,
-div[data-baseweb="checkbox"] input:not(:checked) + div,
-div[data-baseweb="checkbox"] input:not(:checked) ~ div,
-label[data-baseweb="switch"] input:not(:checked) + div,
-label[data-baseweb="switch"] input:not(:checked) ~ div,
-div[data-baseweb="switch"] input:not(:checked) + div,
-div[data-baseweb="switch"] input:not(:checked) ~ div {
+.stToggle div[data-baseweb="checkbox"]:has(input:not(:checked)) > label > div:first-child,
+.stToggle label[data-baseweb="checkbox"]:has(input:not(:checked)) > div:first-child,
+.stToggle div[data-baseweb="switch"]:has(input:not(:checked)) > label > div:first-child,
+.stToggle label[data-baseweb="switch"]:has(input:not(:checked)) > div:first-child {
   background-color: #C9CED6 !important;
   border-color: #C9CED6 !important;
 }
